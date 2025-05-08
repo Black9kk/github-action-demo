@@ -24,7 +24,7 @@ jobs:
       - name: Configure AWS credentials via Assume Role
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::123456789012:role/YourAssumeRoleName  # Update this!
+          role-to-assume: arn:aws:iam::022269452713:role/GitHubActionsAthenaRole  # Update this!
           aws-region: ap-southeast-1  # region of Athena/S3
           role-session-name: github-athena-session
 
