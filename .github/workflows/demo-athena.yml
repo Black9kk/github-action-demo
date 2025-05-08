@@ -44,7 +44,7 @@ jobs:
           END_TIME: ${{ github.event.inputs.end_time }}
         run: |
           OUTPUT_LOCATION="s3://${ENV_NAME}-waf-log-testing/result-query/"
-          QUERY_STRING="SELECT * FROM ${TABLE} WHERE \"date\" BETWEEN  '${START_DATE}' AND  '${END_DATE}'"
+          QUERY_STRING="SELECT * FROM ${TABLE} WHERE date_parse(\"date\", '%c/%e/%Y') BETWEEN date_parse('${START_DATE}', '%Y/%m/%d') AND date_parse('${END_DATE}', '%Y/%m/%d')"
           DATABASE="db_${ENV_NAME}_waf_log_testing"
           WORKGROUP="${ENV_NAME}-waf-log-testing"
 
