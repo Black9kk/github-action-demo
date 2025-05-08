@@ -19,7 +19,7 @@ jobs:
     steps:
       - name: Send Block-Formatted Slack Message
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
           SLACK_TITLE: ${{ github.event.inputs.title }}
           SLACK_MESSAGE: ${{ github.event.inputs.message }}
         run: |

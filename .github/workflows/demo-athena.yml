@@ -1,0 +1,71 @@
+name: Query Athena Logs
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Môi trường (dev01/dev02/dev03)'
+        required: true
+        default: 'dev01'
+      start_time:
+        description: 'Thời gian bắt đầu (format: YYYY-MM-DD HH:MM:SS)'
+        required: true
+      end_time:
+        description: 'Thời gian kết thúc (format: YYYY-MM-DD HH:MM:SS)'
+        required: true
+
+jobs:
+  query_athena:
+    name: Athena Query Job
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Configure AWS credentials via Assume Role
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::123456789012:role/YourAssumeRoleName  # Update this!
+          aws-region: ap-southeast-1  # region of Athena/S3
+          role-session-name: github-athena-session
+
+      - name: Install dependencies
+        run: |
+          pip install awscli
+          pip install boto3
+
+      - name: Run Athena Query
+        env:
+          ENV_NAME: ${{ github.event.inputs.env }}
+          START_TIME: ${{ github.event.inputs.start_time }}
+          END_TIME: ${{ github.event.inputs.end_time }}
+        run: |
+          QUERY_STRING="SELECT * FROM tb_${ENV_NAME}_waf_log WHERE from_iso8601_timestamp(time) BETWEEN from_iso8601_timestamp('${START_TIME}') AND from_iso8601_timestamp('${END_TIME}')"
+
+          DATABASE="db_${ENV_NAME}_waf_log_testing"
+          WORKGROUP="${ENV_NAME}-waf-log-testing"
+          OUTPUT_LOCATION="s3://your-athena-query-results-bucket/results/"  # Replace with real bucket
+
+          QUERY_ID=$(aws athena start-query-execution \
+            --query-string "$QUERY_STRING" \
+            --query-execution-context Database=$DATABASE \
+            --work-group "$WORKGROUP" \
+            --result-configuration "OutputLocation=$OUTPUT_LOCATION" \
+            --output text --query 'QueryExecutionId')
+
+          echo "Query ID: $QUERY_ID"
+
+          # Wait for query to complete
+          for i in {1..30}; do
+            STATUS=$(aws athena get-query-execution --query-execution-id $QUERY_ID --query 'QueryExecution.Status.State' --output text)
+            echo "Status: $STATUS"
+            if [ "$STATUS" == "SUCCEEDED" ]; then break; fi
+            if [ "$STATUS" == "FAILED" ] || [ "$STATUS" == "CANCELLED" ]; then
+              echo "Query failed or was cancelled"
+              exit 1
+            fi
+            sleep 5
+          done
+
+          # Get result
+          aws athena get-query-results --query-execution-id $QUERY_ID \
+            --output text | tee athena_results.txt
