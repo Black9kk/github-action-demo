@@ -8,10 +8,10 @@ on:
         required: true
         default: 'dev01'
       start_time:
-        description: 'Thời gian bắt đầu (format: YYYY-MM-DD HH:MM:SS)'
+        description: 'Thời gian bắt đầu (format: YYYY/MM/DD HH:MM:SS)'
         required: true
       end_time:
-        description: 'Thời gian kết thúc (format: YYYY-MM-DD HH:MM:SS)'
+        description: 'Thời gian kết thúc (format: YYYY/MM/DD HH:MM:SS)'
         required: true
 
 jobs:
@@ -43,7 +43,7 @@ jobs:
           START_TIME: ${{ github.event.inputs.start_time }}
           END_TIME: ${{ github.event.inputs.end_time }}
         run: |
-          QUERY_STRING="SELECT * FROM tb_${ENV_NAME}_waf_log WHERE from_iso8601_timestamp(time) BETWEEN from_iso8601_timestamp('${START_TIME}') AND from_iso8601_timestamp('${END_TIME}')"
+          QUERY_STRING="SELECT * FROM tb_${ENV_NAME}_waf_log WHERE "date" BETWEEN '${START_TIME}' AND '${END_TIME}'"
 
           DATABASE="db_${ENV_NAME}_waf_log_testing"
           WORKGROUP="${ENV_NAME}-waf-log-testing"
