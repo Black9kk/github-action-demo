@@ -1,9 +1,12 @@
-name: Notify Slack
+name: Notify Slack Manually
 
 on:
-  push:
-    branches:
-      - main  # hoặc branch bạn muốn
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Message to send to Slack'
+        required: true
+        default: 'Hello from GitHub Actions!'
 
 jobs:
   slack_notification:
@@ -12,9 +15,8 @@ jobs:
     steps:
       - name: Send Slack Notification
         env:
-          SLACK_WEBHOOK_URL: ${https://hooks.slack.com/services/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}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
-            --data '{
-              "text": "✅ Có một push mới lên nhánh *main*! 🚀"
-            }' $SLACK_WEBHOOK_URL
+            --data "{\"text\": \"${{ github.event.inputs.message }}\"}" \
+            $SLACK_WEBHOOK_URL
