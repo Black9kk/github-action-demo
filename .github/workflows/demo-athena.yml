@@ -43,7 +43,7 @@ jobs:
           START_TIME: ${{ github.event.inputs.start_time }}
           END_TIME: ${{ github.event.inputs.end_time }}
         run: |
-          QUERY_STRING="SELECT * FROM tb_${ENV_NAME}_waf_log WHERE "date" BETWEEN '${START_TIME}' AND '${END_TIME}'"
+          QUERY_STRING="SELECT * FROM tb_${ENV_NAME}_waf_log WHERE date BETWEEN '${START_TIME}' AND '${END_TIME}'"
 
           DATABASE="db_${ENV_NAME}_waf_log_testing"
           WORKGROUP="${ENV_NAME}-waf-log-testing"
