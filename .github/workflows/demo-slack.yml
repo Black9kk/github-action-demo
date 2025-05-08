@@ -1,22 +1,55 @@
-name: Notify Slack Manually
+name: Notify Slack with Blocks
 
 on:
   workflow_dispatch:
     inputs:
-      message:
-        description: 'Message to send to Slack'
+      title:
+        description: 'Header title for the message'
         required: true
-        default: 'Hello from GitHub Actions!'
+        default: '🔔 Notification'
+      message:
+        description: 'Message body to send in Slack'
+        required: true
+        default: 'Hello from GitHub Actions in rich text!'
 
 jobs:
   slack_notification:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Send Slack Notification
+      - name: Send Block-Formatted Slack Message
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_TITLE: ${{ github.event.inputs.title }}
+          SLACK_MESSAGE: ${{ github.event.inputs.message }}
         run: |
+          jq -n --arg title "$SLACK_TITLE" --arg msg "$SLACK_MESSAGE" '{
+            blocks: [
+              {
+                type: "header",
+                text: {
+                  type: "plain_text",
+                  text: $title,
+                  emoji: true
+                }
+              },
+              {
+                type: "rich_text",
+                elements: [
+                  {
+                    type: "rich_text_section",
+                    elements: [
+                      {
+                        type: "text",
+                        text: $msg
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }' > slack_payload.json
+
           curl -X POST -H 'Content-type: application/json' \
-            --data "{\"text\": \"${{ github.event.inputs.message }}\"}" \
+            --data @slack_payload.json \
             $SLACK_WEBHOOK_URL
