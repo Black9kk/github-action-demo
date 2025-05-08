@@ -49,7 +49,7 @@ jobs:
             --query-string "$QUERY_STRING" \
             --query-execution-context Database=$DATABASE \
             --work-group "$WORKGROUP" \
-            --result-configuration "OutputLocation=$OUTPUT_LOCATION" \
+            --result-configuration "OutputLocation=s3://dev01-waf-log-testing/result-query/" \
             --output text --query 'QueryExecutionId')
 
           echo "Query ID: $QUERY_ID"
