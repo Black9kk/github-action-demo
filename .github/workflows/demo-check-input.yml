@@ -38,8 +38,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install awscli
-          pip install boto3
+            pip install awscli
+            pip install boto3
+      - name: Check AWS CLI
+        run: |
+            which aws || echo "AWS CLI not found"
+            aws --version || echo "Cannot get AWS CLI version"
       - name: print date input
         run: |
           echo "Start Time: ${{ github.event.inputs.start_time }}"
