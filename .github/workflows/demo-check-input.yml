@@ -74,11 +74,12 @@ jobs:
           EOF
           )
             # Execute query
-            QUERY_ID=$(aws athena start-query-execution \
+            queryExecutionId=$(aws athena start-query-execution \
             --query-string "$query_string" \
             --query-execution-context Database=db_dev01_waf_log_testing \
             --work-group "dev01-waf-log-testing" \
             --output text \
             --query 'QueryExecutionId')
 
-            echo "Athena query id: $QueryExecutionId"
+            echo "Athena query id: $queryExecutionId" >> $GITHUB_STEP_SUMMARY
+            echo "queryExecutionId=$queryExecutionId" >> $GITHUB_STEP_SUMMARY
