@@ -78,7 +78,7 @@ jobs:
             --query-string "$query_string" \
             --query-execution-context Database=db_dev01_waf_log_testing \
             --work-group "dev01-waf-log-testing" \
-            --output text 
+            --output text \
             --query 'QueryExecutionId')
 
             echo "Athena query id: $QueryExecutionId"
