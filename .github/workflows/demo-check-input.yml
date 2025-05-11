@@ -55,4 +55,7 @@ jobs:
           # Set environment variable
           echo "from_date=${{ inputs.start_time }}" >> $GITHUB_ENV
           echo "to_date=${{ inputs.end_time }}" >> $GITHUB_ENV
-          echo ${{ env.from_date }} >> $GITHUB_STEP_SUMMARY
+          
+      - name: print input 2
+        run: |
+          echo "end date: ${{ env.from_date }}"
