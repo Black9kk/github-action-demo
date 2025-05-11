@@ -36,7 +36,7 @@ jobs:
           aws-region: ap-southeast-1  # region of Athena/S3
           role-session-name: github-athena-session
 
-      - name: print input
+      - name: print date input
         run: |
           echo "Start Time: ${{ github.event.inputs.start_time }}"
           echo "Start End: ${{ github.event.inputs.end_time }}"
@@ -56,6 +56,21 @@ jobs:
           echo "from_date=${{ inputs.start_time }}" >> $GITHUB_ENV
           echo "to_date=${{ inputs.end_time }}" >> $GITHUB_ENV
           
-      - name: print input 2
+      - name: Athena query execution
         run: |
-          echo "end date: ${{ env.from_date }}"
+          query_string=$(cat <<EOF
+            Select
+              *
+            from 
+              "db_dev01_waf_log_testing"."tb_dev01_waf_log"
+          EOF
+          )
+            # Execute query
+            QUERY_ID=$(aws athena start-query-execution \
+            --query-string "$query_string" \
+            --query-execution-context Database=db_dev01_waf_log_testing \
+            --work-group "dev01-waf-log-testing" \
+            --output text 
+            --query 'QueryExecutionId')
+
+            echo "Athena query id: $QueryExecutionId"
