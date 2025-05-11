@@ -3,16 +3,20 @@ name: Query Athena Logs
 on:
   workflow_dispatch:
     inputs:
-      env:
-        description: 'Môi trường (dev01/dev02/dev03)'
+      environment:
+        type: choice
+        description: "Select environment"
         required: true
-        default: 'dev01'
+        options:
+          - dev01
+          - dev02
+          - dev03
       start_time:
-        description: 'Thời gian bắt đầu (format: YYYY/MM/DD HH:MM:SS)'
         required: true
+        type: string
       end_time:
-        description: 'Thời gian kết thúc (format: YYYY/MM/DD HH:MM:SS)'
         required: true
+        type: string
 
 jobs:
   query_athena:
