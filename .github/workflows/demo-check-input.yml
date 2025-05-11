@@ -38,9 +38,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
-            sudo ./aws/install
+          pip install awscli
+          pip install boto3
       - name: print date input
         run: |
           echo "Start Time: ${{ github.event.inputs.start_time }}"
