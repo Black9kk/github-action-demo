@@ -1,4 +1,4 @@
-name: Dev Athena Log Query
+name: Check input date
 
 on:
   workflow_dispatch:
@@ -20,7 +20,7 @@ on:
 
 jobs:
   query-log-dev:
-    runs-on: devaws
+    runs-on: ubuntu-latest
 
     steps:
       - name: Validate time format
