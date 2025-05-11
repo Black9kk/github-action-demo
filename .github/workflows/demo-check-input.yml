@@ -32,8 +32,8 @@ jobs:
       - name: Validate time format
         id: validate
         run: |
-          if [[ ! "${{ github.event.inputs.start_time }}" =~ ^[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$ ]] || \
-             [[ ! "${{ github.event.inputs.end_time }}" =~ ^[0-9]{4}/[0-9]{2}/[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$ ]]; then
+          if [[ ! "${{ github.event.inputs.start_time }}" =~ ^[0-9]{4}/[0-9]{2}/[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]] || \
+             [[ ! "${{ github.event.inputs.end_time }}" =~ ^[0-9]{4}/[0-9]{2}/[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]]; then
             echo "## ❌ Invalid time format. Must be 'YYYY/MM/DDTHH:MM:SS'" >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
