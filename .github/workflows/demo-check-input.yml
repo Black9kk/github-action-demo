@@ -53,6 +53,6 @@ jobs:
           fi
           echo "## ✅ Valid time format"
           # Set environment variable
-          echo "from_date=${start_time% * }" >> $GITHUB_ENV
+          echo "from_date=${start_time}" >> $GITHUB_ENV
           echo "to_date=${ end_time }" >> $GITHUB_ENV
           echo ${{ env.from_date }}
