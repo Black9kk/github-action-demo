@@ -1,0 +1,33 @@
+name: Dev Athena Log Query
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: "Select environment"
+        required: true
+        options:
+          - dev01
+          - dev02
+          - dev03
+      start_time:
+        required: true
+        type: string
+      end_time:
+        required: true
+        type: string
+
+jobs:
+  query-log-dev:
+    runs-on: devaws
+
+    steps:
+      - name: Validate time format
+        id: validate
+        run: |
+          if [[ ! "${{ github.event.inputs.start_time }}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]] || \
+             [[ ! "${{ github.event.inputs.end_time }}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$ ]]; then
+            echo "## ❌ Invalid time format. Must be 'YYYY-MM-DDTHH:MM:SS'" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
