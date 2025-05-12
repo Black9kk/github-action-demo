@@ -66,6 +66,7 @@ jobs:
           
       - name: Athena query execution
         run: |
+          ENV_NAME="${{ github.event.inputs.environment }}"
           DATABASE="db_${ENV_NAME}_waf_log_testing"
           WORKGROUP="${ENV_NAME}-waf-log-testing"
           QUERY_STRING=$(cat <<EOF
