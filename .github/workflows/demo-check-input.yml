@@ -161,6 +161,7 @@ jobs:
           EOF
           )
 
+          echo "$message"
           echo "Sending message to Slack..."
           curl -X POST -H 'Content-type: application/json' --data "$message" "$WEBHOOK_URL"
     
