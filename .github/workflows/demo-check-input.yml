@@ -84,7 +84,7 @@ jobs:
                 "db_dev01_waf_log_testing"."tb_dev01_waf_log"
                 CROSS JOIN UNNEST(ruleGroupList) AS t1 (groupList)
                 CROSS JOIN UNNEST(httprequest.headers) AS t2 (header)
-            WHER            E
+            WHERE
                 "date" >= '2025/05/04'
                 AND "date" <= '2025/05/06'
                 AND action = 'BLOCK'
