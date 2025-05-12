@@ -66,20 +66,36 @@ jobs:
           
       - name: Athena query execution
         run: |
-          query_string=$(cat <<EOF
+          DATABASE="db_${ENV_NAME}_waf_log_testing"
+          WORKGROUP="${ENV_NAME}-waf-log-testing"
+          QUERY_STRING=$(cat <<EOF
             Select
               *
             from 
               "db_dev01_waf_log_testing"."tb_dev01_waf_log"
           EOF
           )
-            # Execute query
-            queryExecutionId=$(aws athena start-query-execution \
-            --query-string "$query_string" \
-            --query-execution-context Database=db_dev01_waf_log_testing \
-            --work-group "dev01-waf-log-testing" \
-            --output text \
-            --query 'QueryExecutionId')
+            QUERY_ID=$(aws athena start-query-execution \
+            --query-string "$QUERY_STRING" \
+            --query-execution-context Database=$DATABASE \
+            --work-group "$WORKGROUP" \
+            --output text --query 'QueryExecutionId')
 
-            echo "Athena query id: $queryExecutionId" >> $GITHUB_STEP_SUMMARY
-            echo "queryExecutionId=$queryExecutionId" >> $GITHUB_STEP_SUMMARY
+          echo "Query ID: $QUERY_ID"
+
+          # Wait for query to complete
+          for i in {1..30}; do
+            STATUS=$(aws athena get-query-execution --query-execution-id $QUERY_ID --query 'QueryExecution.Status.State' --output text)
+            echo "Status: $STATUS"
+            if [ "$STATUS" == "SUCCEEDED" ]; then break; fi
+            if [ "$STATUS" == "FAILED" ] || [ "$STATUS" == "CANCELLED" ]; then
+              echo "Query failed or was cancelled"
+              exit 1
+            fi
+            sleep 5
+          done
+
+          # Get result
+          echo "=== Athena Query Results ==="
+          aws athena get-query-results --query-execution-id $QUERY_ID \
+          --output text

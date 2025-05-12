@@ -75,5 +75,7 @@ jobs:
           done
 
           # Get result
+          echo "=== Athena Query Results ==="
           aws athena get-query-results --query-execution-id $QUERY_ID \
-            --output text | tee athena_results.txt
+          --output text
+
