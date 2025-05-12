@@ -71,7 +71,7 @@ jobs:
                     args: $args
                     }')
             json_lines+="$json"$'\n'
-            done < <(aws athena get-query-results --query-execution-id 05c4296b-3304-43f7-aad7-4809ba2b214a --output text | tail -n +2)
+            done < <(aws athena get-query-results --query-execution-id 975e2176-92a8-48c8-9f07-1ba6555d6f8b --output text | tail -n +2)
 
             # In toàn bộ JSON đã nối lại
             echo "$json_lines"
