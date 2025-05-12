@@ -138,7 +138,7 @@ jobs:
                 }')
             log_json_lines+="$json"$'\n'
             done < <(aws athena get-query-results --query-execution-id $QUERY_ID --output text | tail -n +2)
-          echo "Log after handle: $log_json_lines"
+          echo "log_json_lines=$log_json_lines" >> $GITHUB_ENV
       - name: Send logs to Slack
         env:
           SLACK_WEBHOOK_URL_DEV: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
@@ -153,7 +153,7 @@ jobs:
           # Send message to slack
           message=$(cat <<EOF
             {
-              "text": "*[Tiếng Việt]*\nThông tin log waf\n\n*[English]*\nInfo Log WAF\n\n*[Logs - ${{ github.event.inputs.environment }}]*\n\`\`\`\n${log_json_lines}\n\`\`\`"
+              "text": "*[Tiếng Việt]*\nThông tin log waf\n\n*[English]*\nInfo Log WAF\n\n*[Logs - ${{ github.event.inputs.environment }}]*\n\`\`\`\n${{ env.log_json_lines }}\n\`\`\`"
             }
           EOF
           )
