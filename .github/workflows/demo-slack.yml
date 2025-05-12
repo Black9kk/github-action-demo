@@ -28,6 +28,7 @@ jobs:
             WEBHOOK_URL="$SLACK_WEBHOOK_URL_DEV"
           fi
           log_json_lines="log here"
+          echo "$WEBHOOK_URL"
           # Send message to slack
           message=$(cat <<EOF
             {
