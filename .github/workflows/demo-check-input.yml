@@ -86,7 +86,7 @@ jobs:
             WHERE
                 "date" >= '${{ env.from_date }}'
                 AND "date" <= '${{ env.to_date }}'
-                AND action = 'BLOCK'
+                AND action = 'ALLOW'
                 AND header.name = 'X-Forwarded-For'
             ORDER BY datetime DESC;
           EOF
@@ -151,7 +151,7 @@ jobs:
           else
             WEBHOOK_URL="$SLACK_WEBHOOK_URL_DEV"
           fi
-          logs_content=$(cat log_output.txt)
+          logs_content=$(head -n 5 log_output.txt)
           echo "$logs_content"
           # Send message to slack
           message=$(cat <<EOF
