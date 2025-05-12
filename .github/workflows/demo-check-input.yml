@@ -66,7 +66,7 @@ jobs:
           
       - name: Athena query execution
         run: |
-          ENV_NAME="${{ github.event.inputs.environment }}"
+          ENV_NAME="${{ github.event.inputs.environment }}" >> $GITHUB_ENV
           DATABASE="db_${ENV_NAME}_waf_log_testing"
           WORKGROUP="${ENV_NAME}-waf-log-testing"
           QUERY_STRING=$(cat <<EOF
@@ -85,9 +85,9 @@ jobs:
                 CROSS JOIN UNNEST(ruleGroupList) AS t1 (groupList)
                 CROSS JOIN UNNEST(httprequest.headers) AS t2 (header)
             WHERE
-                "date" >= '2025/05/04'
-                AND "date" <= '2025/05/06'
-                AND action = 'BLOCK'
+                "date" >= '${{ env.from_date }}'
+                AND "date" <= '${{ env.to_date }}'
+                AND action = 'ALLOW'
                 AND header.name = 'X-Forwarded-For'
             ORDER BY datetime DESC;
           EOF
@@ -139,7 +139,26 @@ jobs:
             json_lines+="$json"$'\n'
             done < <(aws athena get-query-results --query-execution-id $QUERY_ID --output text | tail -n +2)
 
-            # In toàn bộ JSON đã nối lại
-            echo "$json_lines"
+      - name: Send logs to Slack
+        env:
+          SLACK_WEBHOOK_URL_DEV: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
+          SLACK_WEBHOOK_URL_PRD: ${{ secrets.SLACK_WEBHOOK_URL_PRD }}
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "prd01" ]; then
+            WEBHOOK_URL="$SLACK_WEBHOOK_URL_PRD"
+          else
+            WEBHOOK_URL="$SLACK_WEBHOOK_URL_DEV"
+          fi
+    
+          # Send message to slack
+          message=$(cat <<EOF
+            {
+              "text": "*[Tiếng Việt]*\nThông tin log waf\n\n*[English]*\nInfo Log WAF\n\n*[Logs - ${{ github.event.inputs.environment }}]*\n\`\`\`\n${json_lines}\n\`\`\`"
+            }
+          EOF
+          )
 
+          echo "Sending message to Slack..."
+          curl -X POST -H 'Content-type: application/json' --data "$message" "$WEBHOOK_URL"
+    
 
