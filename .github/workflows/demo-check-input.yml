@@ -70,10 +70,26 @@ jobs:
           DATABASE="db_${ENV_NAME}_waf_log_testing"
           WORKGROUP="${ENV_NAME}-waf-log-testing"
           QUERY_STRING=$(cat <<EOF
-            Select
-              *
-            from 
-              "db_dev01_waf_log_testing"."tb_dev01_waf_log"
+            SELECT
+              date_format(from_unixtime("timestamp" / 1000 + 9 * 3600), '%Y/%m/%d %H:%i:%s') AS datetime,
+                action,
+                httprequest.uri,
+                terminatingruleid,
+                httprequest.country,
+                groupList.terminatingRule.ruleId AS ruleid,
+                header,
+                terminatingrulematchdetails,
+                httprequest.args
+            FROM            
+                "db_dev01_waf_log_testing"."tb_dev01_waf_log"
+                CROSS JOIN UNNEST(ruleGroupList) AS t1 (groupList)
+                CROSS JOIN UNNEST(httprequest.headers) AS t2 (header)
+            WHER            E
+                "date" >= '2025/05/04'
+                AND "date" <= '2025/05/06'
+                AND action = 'BLOCK'
+                AND header.name = 'X-Forwarded-For'
+            ORDER BY datetime DESC;
           EOF
           )
             QUERY_ID=$(aws athena start-query-execution \
@@ -96,7 +112,34 @@ jobs:
             sleep 5
           done
 
-          # Get result
-          echo "=== Athena Query Results ==="
-          aws athena get-query-results --query-execution-id $QUERY_ID \
-          --output text
+          # Lấy kết quả Athena, bỏ dòng tiêu đề, xử lý từng dòng từ stdout
+          json_lines=""
+
+          while IFS=$'\t' read -r datetime action uri terminatingruleid country ruleid header terminatingrulematchdetails args; do
+            json=$(jq -c -n --arg datetime "$datetime" \
+                --arg action "$action" \
+                --arg uri "$uri" \
+                --arg terminatingruleid "$terminatingruleid" \
+                --arg country "$country" \
+                --arg ruleid "$ruleid" \
+                --arg header "$header" \
+                --arg terminatingrulematchdetails "$terminatingrulematchdetails" \
+                --arg args "$args" \
+                '{
+                  datetime: $datetime,
+                  action: $action,
+                  uri: $uri,
+                  terminatingruleid: $terminatingruleid,
+                  country: $country,
+                  ruleid: $ruleid,
+                  header: $header,
+                  terminatingrulematchdetails: $terminatingrulematchdetails,
+                  args: $args
+                }')
+            json_lines+="$json"$'\n'
+            done < <(aws athena get-query-results --query-execution-id $QUERY_ID --output text | tail -n +2)
+
+            # In toàn bộ JSON đã nối lại
+            echo "$json_lines"
+
+

@@ -1,0 +1,77 @@
+name: Check input date
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: "Select environment"
+        required: true
+        options:
+          - dev01
+          - dev02
+          - dev03
+      start_time:
+        required: true
+        type: string
+      end_time:
+        required: true
+        type: string
+
+jobs:
+  get-waf-log:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      waf-log: 
+    steps:
+      - name: Configure AWS credentials via Assume Role
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::022269452713:role/GitHubActionsAthenaRole  # Update this!
+          role-duration-seconds: 1800
+          aws-region: ap-southeast-1  # region of Athena/S3
+          role-session-name: github-athena-session
+
+      - name: Install dependencies
+        run: |
+            pip install awscli
+            pip install boto3
+      - name: Check AWS CLI
+        run: |
+            which aws || echo "AWS CLI not found"
+            aws --version || echo "Cannot get AWS CLI version"
+      - name: print date input
+        run: |
+            # Lấy kết quả Athena, bỏ dòng tiêu đề, xử lý từng dòng từ stdout
+            json_lines=""
+
+            while IFS=$'\t' read -r datetime action uri terminatingruleid country ruleid header terminatingrulematchdetails args; do
+                json=$(jq -c -n --arg datetime "$datetime" \
+                    --arg action "$action" \
+                    --arg uri "$uri" \
+                    --arg terminatingruleid "$terminatingruleid" \
+                    --arg country "$country" \
+                    --arg ruleid "$ruleid" \
+                    --arg header "$header" \
+                    --arg terminatingrulematchdetails "$terminatingrulematchdetails" \
+                    --arg args "$args" \
+                    '{
+                    datetime: $datetime,
+                    action: $action,
+                    uri: $uri,
+                    terminatingruleid: $terminatingruleid,
+                    country: $country,
+                    ruleid: $ruleid,
+                    header: $header,
+                    terminatingrulematchdetails: $terminatingrulematchdetails,
+                    args: $args
+                    }')
+            json_lines+="$json"$'\n'
+            done < <(aws athena get-query-results --query-execution-id 05c4296b-3304-43f7-aad7-4809ba2b214a --output text | tail -n +2)
+
+            # In toàn bộ JSON đã nối lại
+            echo "$json_lines"
