@@ -1,4 +1,4 @@
-name: Check input date
+name: handle result query
 
 on:
   workflow_dispatch:
