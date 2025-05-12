@@ -3,7 +3,7 @@ name: Notify Slack with Blocks
 on:
   workflow_dispatch:
     inputs:
-      title:
+      environment:
         description: 'Header title for the message'
         required: true
         default: '🔔 Notification'
@@ -17,39 +17,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Send Block-Formatted Slack Message
+      - name: Send logs to Slack
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
-          SLACK_TITLE: ${{ github.event.inputs.title }}
-          SLACK_MESSAGE: ${{ github.event.inputs.message }}
+          SLACK_WEBHOOK_URL_DEV: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
+          SLACK_WEBHOOK_URL_PRD: ${{ secrets.SLACK_WEBHOOK_URL_PRD }}
         run: |
-          jq -n --arg title "$SLACK_TITLE" --arg msg "$SLACK_MESSAGE" '{
-            blocks: [
-              {
-                type: "header",
-                text: {
-                  type: "plain_text",
-                  text: $title,
-                  emoji: true
-                }
-              },
-              {
-                type: "rich_text",
-                elements: [
-                  {
-                    type: "rich_text_section",
-                    elements: [
-                      {
-                        type: "text",
-                        text: $msg
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }' > slack_payload.json
+          if [ "${{ github.event.inputs.environment }}" = "prd01" ]; then
+            WEBHOOK_URL="$SLACK_WEBHOOK_URL_PRD"
+          else
+            WEBHOOK_URL="$SLACK_WEBHOOK_URL_DEV"
+          fi
+          log_json_lines="log here"
+          # Send message to slack
+          message=$(cat <<EOF
+            {
+              "text": "*[Tiếng Việt]*\nThông tin log waf\n\n*[English]*\nInfo Log WAF\n\n*[Logs - ${{ github.event.inputs.environment }}]*\n\`\`\`\n${log_json_lines}\n\`\`\`"
+            }
+          EOF
+          )
 
-          curl -X POST -H 'Content-type: application/json' \
-            --data @slack_payload.json \
-            $SLACK_WEBHOOK_URL
+          echo "Sending message to Slack..."
+          curl -X POST -H 'Content-type: application/json' --data "$message" "$WEBHOOK_URL"
