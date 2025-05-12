@@ -90,7 +90,7 @@ jobs:
             echo "Status: $STATUS"
             if [ "$STATUS" == "SUCCEEDED" ]; then break; fi
             if [ "$STATUS" == "FAILED" ] || [ "$STATUS" == "CANCELLED" ]; then
-              echo "Query failed or was cancelled"
+              echo "Athena query failed: $ERROR_MESSAGE"
               exit 1
             fi
             sleep 5
