@@ -54,7 +54,6 @@ jobs:
           regex='^[0-9]{4}/[0-9]{2}/[0-9]{2}$'
           start_time="${{ github.event.inputs.start_time }}"
           end_time="${{ github.event.inputs.end_time }}"
-
           if [[ ! "$start_time" =~ $regex ]] || [[ ! "$end_time" =~ $regex ]]; then
             echo "## ❌ Invalid time format. Must be 'YYYY/MM/DD'" >> $GITHUB_STEP_SUMMARY
             exit 1
@@ -139,7 +138,7 @@ jobs:
                 }')
             log_json_lines+="$json"$'\n'
             done < <(aws athena get-query-results --query-execution-id $QUERY_ID --output text | tail -n +2)
-
+          echo "Log after handle: $log_json_lines"
       - name: Send logs to Slack
         env:
           SLACK_WEBHOOK_URL_DEV: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
