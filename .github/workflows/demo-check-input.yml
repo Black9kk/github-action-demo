@@ -86,7 +86,7 @@ jobs:
             WHERE
                 "date" >= '${{ env.from_date }}'
                 AND "date" <= '${{ env.to_date }}'
-                AND action = 'ALLOW'
+                AND action = 'BLOCK'
                 AND header.name = 'X-Forwarded-For'
             ORDER BY datetime DESC;
           EOF
