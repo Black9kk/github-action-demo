@@ -138,7 +138,7 @@ jobs:
           # Send message to slack
           message=$(cat <<EOF
             {
-              "text": "*[Tiếng Việt]*\nThông tin log waf\n\n*[English]*\nInfo Log WAF\n\n*[Logs - ${{ github.event.inputs.environment }}]*\n\`\`\`\n$logs_content\n\`\`\`"
+              "text": "*[Tiếng Việt]*\nThông tin log waf\n\n*[English]*\nInfo Log WAF\n\n*[Logs - ${{ env.ENV_NAME }}]*\n\`\`\`\n$logs_content\n\`\`\`"
             }
           EOF
           )
