@@ -114,35 +114,25 @@ jobs:
 
           # Lấy kết quả Athena, bỏ dòng tiêu đề, xử lý từng dòng từ stdout
           echo "Query execution result processing"
-          query_result=$(aws athena get-query-results --query-execution-id "$QUERY_ID" --output text)
-          record_fields=()
-          record_count=0
-          field_per_record=9
-
+          result=$(aws athena get-query-results --query-execution-id "$QUERY_ID")
+          echo "result: $result"
           log_json_lines=""
+          skip_header=true
 
-          while IFS=$'\t' read -r type value; do
-            # Bỏ qua các dòng COLUMNINFO
-            if [[ "$type" != "DATA" ]]; then
+          while IFS=$'\t' read -r datetime action uri terminatingruleid country ruleid header terminatingrulematchdetails args; do
+            if [ "$skip_header" = true ]; then
+              skip_header=false
               continue
             fi
-
-            # Xoá ký tự `$` ở cuối (do bạn paste từ cat, dòng kết thúc bằng `$`)
-            clean_value="${value%\$}"
-            record_fields+=("$clean_value")
-            ((record_count++))
-
-            if ((record_count == field_per_record)); then
-              json=$(jq -c -n \
-                --arg datetime "${record_fields[0]}" \
-                --arg action "${record_fields[1]}" \
-                --arg uri "${record_fields[2]}" \
-                --arg terminatingruleid "${record_fields[3]}" \
-                --arg country "${record_fields[4]}" \
-                --arg ruleid "${record_fields[5]}" \
-                --arg header "${record_fields[6]}" \
-                --arg terminatingrulematchdetails "${record_fields[7]}" \
-                --arg args "${record_fields[8]}" \
+            json=$(jq -c -n --arg datetime "$datetime" \
+                --arg action "$action" \
+                --arg uri "$uri" \
+                --arg terminatingruleid "$terminatingruleid" \
+                --arg country "$country" \
+                --arg ruleid "$ruleid" \
+                --arg header "$header" \
+                --arg terminatingrulematchdetails "$terminatingrulematchdetails" \
+                --arg args "$args" \
                 '{
                   datetime: $datetime,
                   action: $action,
@@ -154,14 +144,8 @@ jobs:
                   terminatingrulematchdetails: $terminatingrulematchdetails,
                   args: $args
                 }')
-              log_json_lines+="$json"$'\n'
-              # reset
-              record_fields=()
-              record_count=0
-            fi
-          done <<< "$query_result"
-
-          # In kết quả
+            log_json_lines+="$json"$'\n'
+            done < <(aws athena get-query-results --query-execution-id $QUERY_ID --output text)
           echo "$log_json_lines" > log_output.txt
       - name: Send logs to Slack
         env:
