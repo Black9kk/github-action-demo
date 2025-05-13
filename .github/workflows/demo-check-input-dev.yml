@@ -127,23 +127,43 @@ jobs:
             @json
             ' result.json > log_output.txt
 
-      - name: Send logs to Slack
-        env:
-          SLACK_WEBHOOK_URL_DEV: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
-        run: |
-          logs_content=$(cat log_output.txt | sed 's/"/\\"/g')
-          #logs_content=$(head -n 10 log_output.txt | sed 's/"/\\"/g')
-          echo "Message: $logs_content"
-          rm -f log_output.txt
-          # Send message to slack
-          message=$(cat <<EOF
-            {
-              "text": "*[Tiếng Việt]*\nThông tin log waf\n\n*[English]*\nInfo Log WAF\n\n*[Logs - ${{ env.ENV_NAME }}]*\n\`\`\`\n$logs_content\n\`\`\`"
-            }
-          EOF
-          )
+      # - name: Send logs to Slack
+      #   env:
+      #     SLACK_WEBHOOK_URL_DEV: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
+      #   run: |
+      #     logs_content=$(cat log_output.txt | sed 's/"/\\"/g')
+      #     #logs_content=$(head -n 10 log_output.txt | sed 's/"/\\"/g')
+      #     echo "Message: $logs_content"
+      #     rm -f log_output.txt
+      #     # Send message to slack
+      #     message=$(cat <<EOF
+      #       {
+      #         "text": "*[Tiếng Việt]*\nThông tin log waf\n\n*[English]*\nInfo Log WAF\n\n*[Logs - ${{ env.ENV_NAME }}]*\n\`\`\`\n$logs_content\n\`\`\`"
+      #       }
+      #     EOF
+      #     )
 
-          echo "Sending message to Slack..."
-          curl -X POST -H 'Content-type: application/json' --data "$message" "$SLACK_WEBHOOK_URL_DEV"
+      #     echo "Sending message to Slack..."
+      #     curl -X POST -H 'Content-type: application/json' --data "$message" "$SLACK_WEBHOOK_URL_DEV"
+      - name: Send logs file to Slack
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}  # Slack bot token
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}  # Channel ID to send the file
+        run: |
+          # Đảm bảo tệp log_output.txt tồn tại
+          if [ -f log_output.txt ]; then
+            echo "Sending log file to Slack..."
+       
+            # Sử dụng Slack API để upload tệp
+            curl -F file=@log_output.txt \
+            -F "initial_comment=Log file for ${{ env.ENV_NAME }}" \
+            -F "channels=$SLACK_CHANNEL_ID" \
+            H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+            https://slack.com/api/files.upload
+
+            echo "Log file sent to Slack."
+          else
+            echo "Log file not found!"
+          fi
     
 
