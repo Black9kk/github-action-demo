@@ -114,8 +114,8 @@ jobs:
 
           # Lấy kết quả Athena, bỏ dòng tiêu đề, xử lý từng dòng từ stdout
           echo "Query execution result processing"
-          json_output=$(aws athena get-query-results --query-execution-id "$QUERY_ID" --output text)
-          echo "$json_output"
+          aws athena get-query-results --query-execution-id "$QUERY_ID" --output text > output.txt
+          cat -A output.txt  # Hiển thị ký tự đặc biệt rõ ràng
           log_json_lines=""
           skip_header=true
 
