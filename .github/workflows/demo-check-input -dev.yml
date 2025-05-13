@@ -1,0 +1,168 @@
+name: Check input date
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: "Select environment"
+        required: true
+        options:
+          - dev01
+          - dev02
+          - dev03
+      start_time:
+        required: true
+        type: string
+      end_time:
+        required: true
+        type: string
+
+jobs:
+  get-waf-log:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      id-token: write
+      contents: read
+    outputs:
+      waf-log: 
+    steps:
+      - name: Configure AWS credentials via Assume Role
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::022269452713:role/GitHubActionsAthenaRole
+          role-duration-seconds: 1800
+          aws-region: ap-southeast-1  # region of Athena/S3
+          role-session-name: github-athena-session
+
+      - name: Install dependencies
+        run: |
+            pip install awscli
+            pip install boto3
+      - name: Check AWS CLI
+        run: |
+            which aws || echo "AWS CLI not found"
+            aws --version || echo "Cannot get AWS CLI version"
+      - name: print date input
+        run: |
+          echo "Start Time: ${{ github.event.inputs.start_time }}"
+          echo "Start End: ${{ github.event.inputs.end_time }}"
+      - name: Validate input time format
+        id: validate
+        run: |
+          regex='^[0-9]{4}/[0-9]{2}/[0-9]{2}$'
+          start_time="${{ github.event.inputs.start_time }}"
+          end_time="${{ github.event.inputs.end_time }}"
+          if [[ ! "$start_time" =~ $regex ]] || [[ ! "$end_time" =~ $regex ]]; then
+            echo "## ❌ Invalid time format. Must be 'YYYY/MM/DD'" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "## ✅ Valid time format"
+          # Set environment variable
+          echo "from_date=${{ inputs.start_time }}" >> $GITHUB_ENV
+          echo "to_date=${{ inputs.end_time }}" >> $GITHUB_ENV
+          
+      - name: Athena query execution
+        run: |
+          ENV_NAME="${{ github.event.inputs.environment }}" >> $GITHUB_ENV
+          DATABASE="db_${ENV_NAME}_waf_log_testing"
+          WORKGROUP="${ENV_NAME}-waf-log-testing"
+          QUERY_STRING=$(cat <<EOF
+            SELECT
+              date_format(from_unixtime("timestamp" / 1000 + 9 * 3600), '%Y/%m/%d %H:%i:%s') AS datetime,
+                action,
+                httprequest.uri,
+                terminatingruleid,
+                httprequest.country,
+                groupList.terminatingRule.ruleId AS ruleid,
+                header,
+                terminatingrulematchdetails,
+                httprequest.args
+            FROM            
+                "db_dev01_waf_log_testing"."tb_dev01_waf_log"
+                CROSS JOIN UNNEST(ruleGroupList) AS t1 (groupList)
+                CROSS JOIN UNNEST(httprequest.headers) AS t2 (header)
+            WHERE
+                "date" >= '${{ env.from_date }}'
+                AND "date" <= '${{ env.to_date }}'
+                AND action = 'ALLOW'
+                AND header.name = 'X-Forwarded-For'
+            ORDER BY datetime DESC;
+          EOF
+          )
+            QUERY_ID=$(aws athena start-query-execution \
+            --query-string "$QUERY_STRING" \
+            --query-execution-context Database=$DATABASE \
+            --work-group "$WORKGROUP" \
+            --output text --query 'QueryExecutionId')
+
+          echo "Query ID: $QUERY_ID"
+
+          # Wait for query to complete
+          for i in {1..30}; do
+            STATUS=$(aws athena get-query-execution --query-execution-id $QUERY_ID --query 'QueryExecution.Status.State' --output text)
+            echo "Status: $STATUS"
+            if [ "$STATUS" == "SUCCEEDED" ]; then break; fi
+            if [ "$STATUS" == "FAILED" ] || [ "$STATUS" == "CANCELLED" ]; then
+              echo "Athena query failed: $ERROR_MESSAGE"
+              exit 1
+            fi
+            sleep 5
+          done
+
+          # Lấy kết quả Athena, bỏ dòng tiêu đề, xử lý từng dòng từ stdout
+          echo "Query execution result processing"
+          log_json_lines=""
+
+          while IFS=$'\t' read -r datetime action uri terminatingruleid country ruleid header terminatingrulematchdetails args; do
+            json=$(jq -c -n --arg datetime "$datetime" \
+                --arg action "$action" \
+                --arg uri "$uri" \
+                --arg terminatingruleid "$terminatingruleid" \
+                --arg country "$country" \
+                --arg ruleid "$ruleid" \
+                --arg header "$header" \
+                --arg terminatingrulematchdetails "$terminatingrulematchdetails" \
+                --arg args "$args" \
+                '{
+                  datetime: $datetime,
+                  action: $action,
+                  uri: $uri,
+                  terminatingruleid: $terminatingruleid,
+                  country: $country,
+                  ruleid: $ruleid,
+                  header: $header,
+                  terminatingrulematchdetails: $terminatingrulematchdetails,
+                  args: $args
+                }')
+            log_json_lines+="$json"$'\n'
+            done < <(aws athena get-query-results --query-execution-id $QUERY_ID --output text | tail -n +2)
+
+          echo "$logs_content"
+          echo "$log_json_lines" > log_output.txt
+      - name: Send logs to Slack
+        env:
+          SLACK_WEBHOOK_URL_DEV: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
+          SLACK_WEBHOOK_URL_PRD: ${{ secrets.SLACK_WEBHOOK_URL_PRD }}
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "prd01" ]; then
+            WEBHOOK_URL="$SLACK_WEBHOOK_URL_PRD"
+          else
+            WEBHOOK_URL="$SLACK_WEBHOOK_URL_DEV"
+          fi
+          logs_content=$(cat log_output.txt | sed 's/"/\\"/g')
+          echo "$logs_content"
+          # Send message to slack
+          message=$(cat <<EOF
+            {
+              "text": "*[Tiếng Việt]*\nThông tin log waf\n\n*[English]*\nInfo Log WAF\n\n*[Logs - ${{ github.event.inputs.environment }}]*\n\`\`\`\n$logs_content\n\`\`\`"
+            }
+          EOF
+          )
+
+          echo "$message"
+          echo "Sending message to Slack..."
+          curl -X POST -H 'Content-type: application/json' --data "$message" "$WEBHOOK_URL"
+    
+
