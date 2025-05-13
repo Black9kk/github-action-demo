@@ -149,10 +149,10 @@ jobs:
         env:
           SLACK_WEBHOOK_URL_DEV: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
         run: |
-          rm -f log_output.txt
           #logs_content=$(cat log_output.txt | sed 's/"/\\"/g')
           logs_content=$(head -n 10 log_output.txt | sed 's/"/\\"/g')
           echo "$logs_content"
+          rm -f log_output.txt
           # Send message to slack
           message=$(cat <<EOF
             {
