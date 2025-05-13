@@ -155,11 +155,7 @@ jobs:
             echo "Sending log file to Slack..."
        
             # Sử dụng Slack API để upload tệp
-            curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H "Content-Type: multipart/form-data" \
-            -F "channels=$SLACK_CHANNEL_ID" \
-            -F "file=@log_output.txt" \
-            https://slack.com/api/files.upload_v2
+          curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" -F file=@log_output.txt -F "channels=$SLACK_CHANNEL_ID" https://slack.com/api/files.upload_v2
 
             echo "Log file sent to Slack."
           else
