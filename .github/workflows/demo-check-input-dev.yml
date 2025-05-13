@@ -91,6 +91,7 @@ jobs:
             ORDER BY datetime DESC;
           EOF
           )
+          echo "QUERY_STRING"
             QUERY_ID=$(aws athena start-query-execution \
             --query-string "$QUERY_STRING" \
             --query-execution-context Database=$DATABASE \
@@ -114,7 +115,7 @@ jobs:
           # Lấy kết quả Athena, bỏ dòng tiêu đề, xử lý từng dòng từ stdout
           echo "Query execution result processing"
           json_output=$(aws athena get-query-results --query-execution-id "$QUERY_ID" --output text)
-          echo "json_output"
+          echo "$json_output"
           log_json_lines=""
           skip_header=true
 
@@ -152,7 +153,7 @@ jobs:
         run: |
           logs_content=$(cat log_output.txt | sed 's/"/\\"/g')
           #logs_content=$(head -n 10 log_output.txt | sed 's/"/\\"/g')
-          echo "$logs_content"
+          echo "Message: $logs_content"
           rm -f log_output.txt
           # Send message to slack
           message=$(cat <<EOF
