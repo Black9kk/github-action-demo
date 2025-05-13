@@ -1,4 +1,4 @@
-name: Check input date
+name: Send log to slack Dev
 
 on:
   workflow_dispatch:
