@@ -114,8 +114,13 @@ jobs:
           # Lấy kết quả Athena, bỏ dòng tiêu đề, xử lý từng dòng từ stdout
           echo "Query execution result processing"
           log_json_lines=""
+          skip_header=true
 
           while IFS=$'\t' read -r datetime action uri terminatingruleid country ruleid header terminatingrulematchdetails args; do
+            if [ "$skip_header" = true ]; then
+              skip_header=false
+              continue
+            fi
             json=$(jq -c -n --arg datetime "$datetime" \
                 --arg action "$action" \
                 --arg uri "$uri" \
@@ -137,22 +142,15 @@ jobs:
                   args: $args
                 }')
             log_json_lines+="$json"$'\n'
-            done < <(aws athena get-query-results --query-execution-id $QUERY_ID --output text | tail -n +2)
+            done < <(aws athena get-query-results --query-execution-id $QUERY_ID --output text)
 
-          echo "$logs_content"
           echo "$log_json_lines" > log_output.txt
       - name: Send logs to Slack
         env:
           SLACK_WEBHOOK_URL_DEV: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
-          SLACK_WEBHOOK_URL_PRD: ${{ secrets.SLACK_WEBHOOK_URL_PRD }}
         run: |
-          if [ "${{ github.event.inputs.environment }}" = "prd01" ]; then
-            WEBHOOK_URL="$SLACK_WEBHOOK_URL_PRD"
-          else
-            WEBHOOK_URL="$SLACK_WEBHOOK_URL_DEV"
-          fi
+          
           logs_content=$(cat log_output.txt | sed 's/"/\\"/g')
-          echo "$logs_content"
           # Send message to slack
           message=$(cat <<EOF
             {
@@ -161,8 +159,7 @@ jobs:
           EOF
           )
 
-          echo "$message"
           echo "Sending message to Slack..."
-          curl -X POST -H 'Content-type: application/json' --data "$message" "$WEBHOOK_URL"
+          curl -X POST -H 'Content-type: application/json' --data "$message" "$SLACK_WEBHOOK_URL_DEV"
     
 
