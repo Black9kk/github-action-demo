@@ -127,40 +127,40 @@ jobs:
             @json
             ' result.json > log_output.txt
 
-      # - name: Send logs to Slack
-      #   env:
-      #     SLACK_WEBHOOK_URL_DEV: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
-      #   run: |
-      #     logs_content=$(cat log_output.txt | sed 's/"/\\"/g')
-      #     #logs_content=$(head -n 10 log_output.txt | sed 's/"/\\"/g')
-      #     echo "Message: $logs_content"
-      #     rm -f log_output.txt
-      #     # Send message to slack
-      #     message=$(cat <<EOF
-      #       {
-      #         "text": "*[Tiếng Việt]*\nThông tin log waf\n\n*[English]*\nInfo Log WAF\n\n*[Logs - ${{ env.ENV_NAME }}]*\n\`\`\`\n$logs_content\n\`\`\`"
-      #       }
-      #     EOF
-      #     )
-
-      #     echo "Sending message to Slack..."
-      #     curl -X POST -H 'Content-type: application/json' --data "$message" "$SLACK_WEBHOOK_URL_DEV"
-      - name: Send logs file to Slack (Attempt 2)
+      - name: Send logs to Slack
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+          SLACK_WEBHOOK_URL_DEV: ${{ secrets.SLACK_WEBHOOK_URL_DEV }}
         run: |
-          if [ -f log_output.txt ]; then
-            echo "Sending log file to Slack using files.upload_v2 (Attempt 2)..."
-            curl -v -X POST \
-              -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-              -H "Content-Type: multipart/form-data" \
-              -F "channels=$SLACK_CHANNEL_ID" \
-              -F "file=@log_output.txt" \
-              https://slack.com/api/files.upload_v2
-            echo "Log file sent to Slack."
-          else
-            echo "Log file not found!"
-          fi
+          logs_content=$(cat log_output.txt | sed 's/"/\\"/g')
+          #logs_content=$(head -n 10 log_output.txt | sed 's/"/\\"/g')
+          echo "Message: $logs_content"
+          rm -f log_output.txt
+          # Send message to slack
+          message=$(cat <<EOF
+            {
+              "text": "*[Tiếng Việt]*\nThông tin log waf\n\n*[English]*\nInfo Log WAF\n\n*[Logs - ${{ env.ENV_NAME }}]*\n\`\`\`\n$logs_content\n\`\`\`"
+            }
+          EOF
+          )
+
+          echo "Sending message to Slack..."
+          curl -X POST -H 'Content-type: application/json' --data "$message" "$SLACK_WEBHOOK_URL_DEV"
+      # - name: Send logs file to Slack (Attempt 2)
+      #   env:
+      #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      #     SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+      #   run: |
+      #     if [ -f log_output.txt ]; then
+      #       echo "Sending log file to Slack using files.upload_v2 (Attempt 2)..."
+      #       curl -v -X POST \
+      #         -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+      #         -H "Content-Type: multipart/form-data" \
+      #         -F "channels=$SLACK_CHANNEL_ID" \
+      #         -F "file=@log_output.txt" \
+      #         https://slack.com/api/files.upload_v2
+      #       echo "Log file sent to Slack."
+      #     else
+      #       echo "Log file not found!"
+      #     fi
     
 
