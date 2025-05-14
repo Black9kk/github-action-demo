@@ -103,25 +103,14 @@ jobs:
       - name: Process Athena query results
         run: |
           aws athena get-query-results --query-execution-id $query_execution_id --output json > results.json
-      - name: Upload query result
-        uses: actions/upload-artifact@v3
-        with:
-          name: results
-          path: results.json
-
+          echo "The result is: $(cat results.json)"
 
   slack-send-log:
     needs: get-waf-log
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Download query result
-        uses: actions/upload-artifact@v3.1.3
-        with:
-          name: results
-          path: .
+        uses: actions/checkout@v2
 
       - name: Format Slack message
         id: format_message
