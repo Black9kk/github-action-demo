@@ -81,8 +81,8 @@ jobs:
           EOF
           )
 
-          DATABASE="db_${ENV_NAME}_waf_log_testing"
-          WORKGROUP="${ENV_NAME}-waf-log-testing"
+          DATABASE="db_dev01_waf_log_testing"
+          WORKGROUP="dev01-waf-log-testing"
           query_execution_id=$(aws athena start-query-execution \
             --query-string "$query" \
             --query-execution-context Database=$DATABASE \
