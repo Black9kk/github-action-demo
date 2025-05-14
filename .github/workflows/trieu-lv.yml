@@ -73,7 +73,7 @@ jobs:
                 CROSS JOIN UNNEST(ruleGroupList) AS t1 (groupList)
                 CROSS JOIN UNNEST(httprequest.headers) AS t2 (header)
             WHERE
-              "date" bettween '$from_date' and '$to_date'
+              "date" between '$from_date' and '$to_date'
               AND action = 'ALLOW'
               AND date_format(from_unixtime(timestamp / 1000 + 9 * 3600), '%Y/%m/%d %H:%i:%s') BETWEEN '${{ github.event.inputs.from_datetime }}' AND '${{ github.event.inputs.to_datetime }}'
             ORDER BY datetime DESC
