@@ -9,7 +9,7 @@ on:
         default: 'stg01'
         type: choice
         options:
-          - stg01
+          - dev01
       from_datetime:
         description: 'Start datetime to collect logs. Input for JST time zone, format: YYYY/MM/DD hh:mm:ss'
         required: true
