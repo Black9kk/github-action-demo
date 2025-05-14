@@ -43,7 +43,7 @@ jobs:
       - name: Validate input parameters
         run: |
           function check_datetime() {
-            if  [[! "$1" =~ ^[0-9]{4}/[0-9]{2}/[0-9]{2}\ [0-9]{2}:[0-9]{2}:[0-9]{2}$ ]]; then
+            if  [[ ! "$1" =~ ^[0-9]{4}/[0-9]{2}/[0-9]{2}\ [0-9]{2}:[0-9]{2}:[0-9]{2}$ ]]; then
               echo "Error: Invalid datetime value '$1'. Please enter a valid datetime format YYYY/MM/DD hh:mm:ss" >&2
               exit 1
             fi
