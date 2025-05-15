@@ -1,4 +1,4 @@
-name: Get WAF Block Log
+name: Get WAF Block Log trieulv
 
 on:
   workflow_dispatch:
