@@ -78,7 +78,6 @@ jobs:
             where
                 "date" between '$from_date' and '$to_date'
                 and action = 'ALLOW'
-            # and date_format(from_unixtime("timestamp" / 1000 + 9 * 3600), '%Y/%m/%d %H:%i:%s') between  '${{ github.event.inputs.from_datetime }}' and '${{ github.event.inputs.to_datetime }}'
             ORDER BY datetime DESC
             LIMIT ${{ github.event.inputs.limit }};
           EOF
