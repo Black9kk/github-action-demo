@@ -124,7 +124,7 @@ jobs:
             | sed 's/^"\+//; s/"\+$//;'
           )
           echo "$query_result"
-          echo "$query_result" > $GITHUB_OUTPUT
+          echo "$query_result" >> $GITHUB_OUTPUT
   slack-send-log:
     needs: get-waf-log
     runs-on: ubuntu-latest
