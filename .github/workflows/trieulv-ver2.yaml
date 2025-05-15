@@ -126,5 +126,11 @@ jobs:
         run: |
           logs=${{ needs.get-waf-log.outputs.waf-log }}
           message="*[Tiếng Việt]*\nTitle Tiếng Việt TrieuLV\n\n*[English]*\nTittle English TrieuLV\n\n*[Logs - ${{ github.event.inputs.env }}]*\n\`\`\`json\n$logs\n\`\`\`"
-          echo "message: $message"
-          curl -X POST -H 'Content-type: application/json' --data "$message" "$SLACK_WEBHOOK_URL_DEV"
+          echo "$message"
+          status_code=$(curl -X POST -H 'Content-type: application/json' --data "$message" "${{ secrets.SLACK_WEBHOOK_URL_DEV }}" -w "%{http_code}" -s)
+            echo "Status code: $status_code"
+            if [ "$status_code" -eq 200 ]; then
+              echo "Message sent successfully!"
+            else
+              echo "Failed to send message. Status code: $status_code"
+            fi
