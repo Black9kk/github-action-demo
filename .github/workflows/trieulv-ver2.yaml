@@ -94,7 +94,7 @@ jobs:
          while true; do
           status=$(aws athena get-query-execution --query-execution-id $query_execution_id --query 'QueryExecution.Status.State' --output text)
           echo "Current status: $status"
-          if [[ "$status" != "SUCCEEDED" ]]; then
+          if [[ "$status" == "SUCCEEDED" ]]; then
             break
           elif [[ "$status" == "FAILED" || "$status" == "CANCELLED" ]]; then
             echo "Athena query failed with status: $status"
