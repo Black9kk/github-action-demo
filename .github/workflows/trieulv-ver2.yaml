@@ -132,7 +132,7 @@ jobs:
       - name: Format Slack message
         run: |
           logs=${{ needs.get-waf-log.outputs.waf-log }}
-          message="*[Tiếng Việt]*\nTitle Tiếng Việt\n\n*[English]*\nTittle Tiếng anh\n\n*[Logs - ${{ github.event.inputs.env }}]*\n\`\`\`json\n$logs\n\`\`\`"
+          message="*[Tiếng Việt]*\nTitle Tiếng Việt TrieuLV\n\n*[English]*\nTittle English TrieuLV\n\n*[Logs - ${{ github.event.inputs.env }}]*\n\`\`\`json\n$logs\n\`\`\`"
           echo "$message" > slack_message.txt
       - name: Send message to Slack via webhook and check status
         id: send_slack
