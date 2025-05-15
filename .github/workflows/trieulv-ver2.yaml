@@ -26,6 +26,9 @@ on:
 jobs:
   get-waf-log:
     runs-on: ubuntu-latest
+    permissions:
+        id-token: write
+        contents: read
     outputs:
       waf-log: ${{ steps.processing_query.outputs.processed_result }}
     steps:
