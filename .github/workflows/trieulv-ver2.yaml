@@ -116,7 +116,7 @@ jobs:
             ({}; . + { ($headers[$i]): $values[$i] }) |
             @json
             ' result.json)
-
+            echo "$processed_result"
             echo "processed_result=$processed_result" >> $GITHUB_OUTPUT
   slack-send-log:
     needs: get-waf-log
@@ -126,19 +126,4 @@ jobs:
         run: |
           logs=${{ needs.get-waf-log.outputs.waf-log }}
           message="*[Tiếng Việt]*\nTitle Tiếng Việt TrieuLV\n\n*[English]*\nTittle English TrieuLV\n\n*[Logs - ${{ github.event.inputs.env }}]*\n\`\`\`json\n$logs\n\`\`\`"
-          echo "$message" > slack_message.txt
-      - name: Send message to Slack via webhook and check status
-        id: send_slack
-        run: |
-          payload=$(jq -Rs '{text: .}' < slack_message.txt)
-          status_code=$(curl -s -o response.txt -w "%{http_code}" -X POST -H 'Content-type: application/json' --data "$payload" ${{ secrets.SLACK_WEBHOOK_URL_DEV }})
-          echo "status_code=$status_code" >> $GITHUB_OUTPUT
-      - name: Check Slack message status
-        run: |
-          if [[ "${{ steps.send_slack.outputs.status_code }}" != "200" ]]; then
-            echo "Slack message sending failed with status code: ${{ steps.send_slack.outputs.status_code }}"
-            cat response.txt
-            exit 1
-          else
-            echo "Slack message sent successfully."
-          fi
+          status_code=$(curl -s -o response.txt -w "%{http_code}" -X POST -H 'Content-type: application/json' --data "$message" ${{ secrets.SLACK_WEBHOOK_URL_DEV }})
