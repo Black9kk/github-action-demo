@@ -106,7 +106,7 @@ jobs:
         id: processing_query
         run: |
           aws athena get-query-results \
-            --query-execution-id "$QUERY_ID" \
+            --query-execution-id "$query_execution_id" \
             --output json > result.json
           processed_result=$(jq -r '
             .ResultSet.Rows as $rows |
