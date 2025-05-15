@@ -92,19 +92,13 @@ jobs:
 
           echo "query_execution_id=$query_execution_id" >> $GITHUB_ENV
 
-      - name: Check Athena query execution        status
+      - name: Check Athena query execution status
         run: |
-         while true; do
           status=$(aws athena get-query-execution --query-execution-id $query_execution_id --query 'QueryExecution.Status.State' --output text)
-        echo "Current status: $status"
           if [[ "$status" != "SUCCEEDED" ]]; then
-        break
-        elif [[ "$status" == "FAILED" || "$status" == "CANCELLED" ]]; then
-        echo "Athena query failed with status: $status"
+            echo "Athena query execution failed"
             exit 1
           fi
-        sleep 5
-      done
 
       - name: Process Athena query results
         run: |
