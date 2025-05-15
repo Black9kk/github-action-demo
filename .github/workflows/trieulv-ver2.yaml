@@ -105,25 +105,24 @@ jobs:
       - name: Process Athena query results
         id: processing_query
         run: |
-          query_result=$(aws athena get-query-results --query-execution-id $query_execution_id)
-          processed_result=$(echo "$query_result" | jq -c '.ResultSet.Rows
-              | .[1:]
-              | map({
-                  datetime: .Data[0].VarCharValue,
-                  action: .Data[1].VarCharValue,
-                  uri: .Data[2].VarCharValue,
-                  terminatingruleid: .Data[3].VarCharValue,
-                  country: .Data[4].VarCharValue,
-                  ruleid: .Data[5].VarCharValue,
-                  header: .Data[6].VarCharValue,
-                  terminatingrulematchdetails: .Data[7].VarCharValue,
-                  args: .Data[8].VarCharValue
-                })
-              | map(@json)
-              | join("\n")' \
-            | sed 's/^"\+//; s/"\+$//;'
-          )
-          echo "processed_result=$processed_result" >> $GITHUB_OUTPUT
+            query_result=$(aws athena get-query-results --query-execution-id $query_execution_id --output json)
+            processed_result=$(echo "$query_result" | jq -c '.ResultSet.Rows
+                | .[1:]
+                | map({
+                    datetime: .Data[0].VarCharValue,
+                    action: .Data[1].VarCharValue,
+                    uri: .Data[2].VarCharValue,
+                    terminatingruleid: .Data[3].VarCharValue,
+                    country: .Data[4].VarCharValue,
+                    ruleid: .Data[5].VarCharValue,
+                    header: (.Data[6].VarCharValue | fromjson),
+                    terminatingrulematchdetails: (.Data[7].VarCharValue | fromjson),
+                    args: .Data[8].VarCharValue
+                    })
+                | map(@json)
+                | join("\n")'
+                )
+            echo "processed_result=$processed_result" >> $GITHUB_OUTPUT
   slack-send-log:
     needs: get-waf-log
     runs-on: ubuntu-latest
