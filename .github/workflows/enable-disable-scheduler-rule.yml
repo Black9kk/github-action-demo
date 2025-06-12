@@ -18,6 +18,8 @@ jobs:
   toggle-scheduler:
     runs-on: ubuntu-latest
 
+    continue-on-error: false
+
     permissions:
       id-token: write
       contents: read
@@ -60,7 +62,7 @@ jobs:
           
           if [ "$CURRENT_STATE" == "${{ github.event.inputs.state }}" ]; then
             echo "⚠️ Scheduler đã ở trạng thái '${{ github.event.inputs.state }}', không cần cập nhật." >> $GITHUB_STEP_SUMMARY
-            exit 0
+            exit 78
           fi
 
       - name: Chuẩn bị dữ liệu scheduler hiện tại
