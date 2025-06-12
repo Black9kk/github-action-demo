@@ -18,8 +18,6 @@ jobs:
   toggle-scheduler:
     runs-on: ubuntu-latest
 
-    continue-on-error: false
-
     permissions:
       id-token: write
       contents: read
@@ -61,11 +59,15 @@ jobs:
           echo "CURRENT_STATE=$CURRENT_STATE" >> $GITHUB_ENV
           
           if [ "$CURRENT_STATE" == "${{ github.event.inputs.state }}" ]; then
+            echo "SKIP_UPDATE=true" >> $GITHUB_ENV
             echo "⚠️ Scheduler đã ở trạng thái '${{ github.event.inputs.state }}', không cần cập nhật." >> $GITHUB_STEP_SUMMARY
-            exit 78
+            exit 0
+          else
+            echo "SKIP_UPDATE=false" >> $GITHUB_ENV
           fi
 
       - name: Chuẩn bị dữ liệu scheduler hiện tại
+        if: env.SKIP_UPDATE == 'false'
         run: |
           SCHEDULE_EXPRESSION=$(jq -r .ScheduleExpression current.json)
           FLEXIBLE_WINDOW=$(jq -c .FlexibleTimeWindow current.json)
@@ -76,6 +78,7 @@ jobs:
           echo "SCHEDULE_EXPRESSION=$SCHEDULE_EXPRESSION" >> $GITHUB_ENV
 
       - name: Cập nhật trạng thái scheduler
+        if: env.SKIP_UPDATE == 'false'
         run: |
           echo "⚙️ Đang chuyển scheduler '${{ github.event.inputs.scheduler_name }}' sang trạng thái '${{ github.event.inputs.state }}'..."
           if aws scheduler update-schedule \
