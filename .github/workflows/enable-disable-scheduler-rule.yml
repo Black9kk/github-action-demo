@@ -71,4 +71,4 @@ jobs:
         run: |
           echo "❌ FAILED to update scheduler." >> $GITHUB_STEP_SUMMARY
           echo "--- Error Log ---"
-          cat update_error.log || echo "No error log found."
+          cat update_error.log || echo "No error log found." >> $GITHUB_STEP_SUMMARY
