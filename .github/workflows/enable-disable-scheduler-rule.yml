@@ -90,9 +90,6 @@ jobs:
               --state "${{ github.event.inputs.state }}" \
               --region $AWS_REGION > update_success.json 2> update_error.log; then
             echo "✅ Scheduler '${{ github.event.inputs.scheduler_name }}' đã chuyển sang trạng thái '${{ github.event.inputs.state }}'." >> $GITHUB_STEP_SUMMARY
-            echo '```json' >> $GITHUB_STEP_SUMMARY
-            cat update_success.json >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Lỗi khi cập nhật trạng thái scheduler!" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
