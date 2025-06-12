@@ -1,0 +1,113 @@
+name: Toggle EventBridge Scheduler
+
+on:
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Môi trường (dev01, dev02)'
+        required: true
+        type: choice
+        options:
+          - dev01
+          - dev02
+      scheduler_name:
+        description: 'Tên scheduler rule (không cần prefix td-...)'
+        required: true
+      state:
+        description: 'Trạng thái muốn chuyển'
+        required: true
+        type: choice
+        options:
+          - ENABLED
+          - DISABLED
+
+jobs:
+  toggle-scheduler:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    env:
+      AWS_REGION: ap-southeast-1
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (assume role)
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::022269452713:role/GitHubActionsAthenaRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Tạo tên scheduler đầy đủ
+        id: create_scheduler_name
+        run: |
+          FULL_SCHEDULER_NAME="td-${{ github.event.inputs.env }}-${{ github.event.inputs.scheduler_name }}"
+          echo "SCHEDULER_NAME=$FULL_SCHEDULER_NAME" >> $GITHUB_ENV
+          echo "🔧 Scheduler Name: $FULL_SCHEDULER_NAME"
+
+      - name: Kiểm tra scheduler tồn tại
+        id: check_schedule
+        run: |
+          echo "🔍 Kiểm tra scheduler '${SCHEDULER_NAME}'..."
+          if aws scheduler get-schedule \
+              --name "$SCHEDULER_NAME" \
+              --group-name default \
+              --region $AWS_REGION > current.json 2> err.log; then
+            echo "✅ Scheduler tồn tại."
+          else
+            echo "❌ Scheduler không tồn tại!" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat err.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Kiểm tra trạng thái hiện tại có trùng input không
+        id: state_check
+        run: |
+          CURRENT_STATE=$(jq -r .State current.json)
+          echo "CURRENT_STATE=$CURRENT_STATE" >> $GITHUB_ENV
+          
+          if [ "$CURRENT_STATE" == "${{ github.event.inputs.state }}" ]; then
+            echo "SKIP_UPDATE=true" >> $GITHUB_ENV
+            echo "⚠️ Scheduler đã ở trạng thái '${{ github.event.inputs.state }}', không cần cập nhật." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          else
+            echo "SKIP_UPDATE=false" >> $GITHUB_ENV
+          fi
+
+      - name: Chuẩn bị dữ liệu scheduler hiện tại
+        if: env.SKIP_UPDATE == 'false'
+        run: |
+          SCHEDULE_EXPRESSION=$(jq -r .ScheduleExpression current.json)
+          FLEXIBLE_WINDOW=$(jq -c .FlexibleTimeWindow current.json)
+          TARGET=$(jq -c .Target current.json)
+
+          echo "$FLEXIBLE_WINDOW" > fw.json
+          echo "$TARGET" > target.json
+          echo "SCHEDULE_EXPRESSION=$SCHEDULE_EXPRESSION" >> $GITHUB_ENV
+
+      - name: Cập nhật trạng thái scheduler
+        if: env.SKIP_UPDATE == 'false'
+        run: |
+          echo "⚙️ Đang chuyển scheduler '${SCHEDULER_NAME}' sang trạng thái '${{ github.event.inputs.state }}'..."
+          if aws scheduler update-schedule \
+              --name "$SCHEDULER_NAME" \
+              --group-name default \
+              --schedule-expression "$SCHEDULE_EXPRESSION" \
+              --flexible-time-window file://fw.json \
+              --target file://target.json \
+              --state "${{ github.event.inputs.state }}" \
+              --region $AWS_REGION > update_success.json 2> update_error.log; then
+            echo "✅ Scheduler '$SCHEDULER_NAME' đã chuyển sang trạng thái '${{ github.event.inputs.state }}'." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Lỗi khi cập nhật trạng thái scheduler!" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat update_error.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
