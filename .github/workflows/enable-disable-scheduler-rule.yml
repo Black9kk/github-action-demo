@@ -36,7 +36,7 @@ jobs:
         id: check_scheduler
         run: |
           set -e
-          echo "Checking if scheduler '${{ github.event.inputs.scheduler_name }}' exists..."
+          echo "Checking if scheduler '${{ github.event.inputs.scheduler_name }}' exists..." >> $GITHUB_STEP_SUMMARY
           if aws scheduler get-schedule \
               --name "${{ github.event.inputs.scheduler_name }}" \
               --group-name default > result.json 2> err.log; then
@@ -51,7 +51,7 @@ jobs:
         id: toggle
         run: |
           set -e
-          echo "Toggling scheduler '${{ github.event.inputs.scheduler_name }}' to state '${{ github.event.inputs.desired_state }}'..."
+          echo "Toggling scheduler '${{ github.event.inputs.scheduler_name }}' to state '${{ github.event.inputs.desired_state }}'..." >> $GITHUB_STEP_SUMMARY
 
           aws scheduler update-schedule \
             --name "${{ github.event.inputs.scheduler_name }}" \
