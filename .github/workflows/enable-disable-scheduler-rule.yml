@@ -33,7 +33,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::022269452713:role/GitHubActionsAthenaRole
-          aws-region: ap-southeast-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Kiểm tra scheduler tồn tại
         id: check_schedule
@@ -50,6 +50,17 @@ jobs:
             cat err.log >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
+          fi
+
+      - name: Kiểm tra trạng thái hiện tại có trùng input không
+        id: state_check
+        run: |
+          CURRENT_STATE=$(jq -r .State current.json)
+          echo "CURRENT_STATE=$CURRENT_STATE" >> $GITHUB_ENV
+          
+          if [ "$CURRENT_STATE" == "${{ github.event.inputs.state }}" ]; then
+            echo "⚠️ Scheduler đã ở trạng thái '${{ github.event.inputs.state }}', không cần cập nhật." >> $GITHUB_STEP_SUMMARY
+            exit 0
           fi
 
       - name: Chuẩn bị dữ liệu scheduler hiện tại
