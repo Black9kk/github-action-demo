@@ -1,4 +1,4 @@
-name: Toggle EventBridge Scheduler
+name: Toggle EventBridge Scheduler 2
 
 on:
   workflow_dispatch:
