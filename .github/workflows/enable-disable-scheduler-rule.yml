@@ -4,12 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       scheduler_name:
-        description: 'Tên scheduler rule'
+        description: 'Tên scheduler rule (group: default)'
         required: true
-      desired_state:
-        description: 'Trạng thái muốn chuyển (ENABLED hoặc DISABLED)'
+      state:
+        description: 'Trạng thái muốn chuyển'
         required: true
-        default: 'DISABLED'
+        type: choice
+        options:
+          - ENABLED
+          - DISABLED
 
 jobs:
   toggle-scheduler:
@@ -26,49 +29,58 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Assume IAM Role for AWS access
+      - name: Configure AWS credentials (assume role)
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: arn:aws:iam::022269452713:role/GitHubActionsAthenaRole
           aws-region: ap-southeast-1
 
-      - name: Check if scheduler exists
-        id: check_scheduler
+      - name: Kiểm tra scheduler tồn tại
+        id: check_schedule
         run: |
-          set -e
-          echo "Checking if scheduler '${{ github.event.inputs.scheduler_name }}' exists..." >> $GITHUB_STEP_SUMMARY
+          echo "🔍 Kiểm tra scheduler '${{ github.event.inputs.scheduler_name }}'..."
           if aws scheduler get-schedule \
               --name "${{ github.event.inputs.scheduler_name }}" \
-              --group-name default > result.json 2> err.log; then
-              echo "Scheduler found." >> $GITHUB_STEP_SUMMARY
+              --group-name default \
+              --region $AWS_REGION > current.json 2> err.log; then
+            echo "✅ Scheduler tồn tại."
           else
-              echo "ERROR: Scheduler '${{ github.event.inputs.scheduler_name }}' does not exist." >> $GITHUB_STEP_SUMMARY
-              cat err.log
-              exit 1
+            echo "❌ Scheduler không tồn tại!" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat err.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
           fi
 
-      - name: Toggle scheduler state
-        id: toggle
+      - name: Chuẩn bị dữ liệu scheduler hiện tại
         run: |
-          set -e
-          echo "Toggling scheduler '${{ github.event.inputs.scheduler_name }}' to state '${{ github.event.inputs.desired_state }}'..." >> $GITHUB_STEP_SUMMARY
+          SCHEDULE_EXPRESSION=$(jq -r .ScheduleExpression current.json)
+          FLEXIBLE_WINDOW=$(jq -c .FlexibleTimeWindow current.json)
+          TARGET=$(jq -c .Target current.json)
 
-          aws scheduler update-schedule \
-            --name "${{ github.event.inputs.scheduler_name }}" \
-            --group-name default \
-            --state "${{ github.event.inputs.desired_state }}" \
-            > update_output.json 2> update_error.log
+          echo "$FLEXIBLE_WINDOW" > fw.json
+          echo "$TARGET" > target.json
+          echo "SCHEDULE_EXPRESSION=$SCHEDULE_EXPRESSION" >> $GITHUB_ENV
 
-          echo "Scheduler state updated successfully." >> $GITHUB_STEP_SUMMARY
-
-      - name: Output success log
+      - name: Cập nhật trạng thái scheduler
         run: |
-          echo "✅ SUCCESS: Scheduler '${{ github.event.inputs.scheduler_name }}' set to '${{ github.event.inputs.desired_state }}'."
-          cat update_output.json
-
-      - name: Output error log on failure
-        if: failure()
-        run: |
-          echo "❌ FAILED to update scheduler." >> $GITHUB_STEP_SUMMARY
-          echo "--- Error Log ---"
-          cat update_error.log || echo "No error log found." >> $GITHUB_STEP_SUMMARY
+          echo "⚙️ Đang chuyển scheduler '${{ github.event.inputs.scheduler_name }}' sang trạng thái '${{ github.event.inputs.state }}'..."
+          if aws scheduler update-schedule \
+              --name "${{ github.event.inputs.scheduler_name }}" \
+              --group-name default \
+              --schedule-expression "$SCHEDULE_EXPRESSION" \
+              --flexible-time-window file://fw.json \
+              --target file://target.json \
+              --state "${{ github.event.inputs.state }}" \
+              --region $AWS_REGION > update_success.json 2> update_error.log; then
+            echo "✅ Scheduler '${{ github.event.inputs.scheduler_name }}' đã chuyển sang trạng thái '${{ github.event.inputs.state }}'." >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat update_success.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Lỗi khi cập nhật trạng thái scheduler!" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat update_error.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
