@@ -46,11 +46,13 @@ jobs:
           echo "DESIRED_STATE=${{ inputs.state }}" >> $GITHUB_ENV
 
       - name: Fetch scheduler info and handle logic
+        id: update_schedule_state
         run: |
           RAW_JSON=$(aws scheduler get-schedule --name "$SCHEDULER_NAME" 2>&1 || true)
           # Check exist
           if echo "$RAW_JSON" | grep -q "ResourceNotFoundException"; then
             echo "Scheduler \`$SCHEDULER_NAME\` does not exist." >> $GITHUB_STEP_SUMMARY
+            echo "not_found=true" >> "$GITHUB_OUTPUT"
             exit 1
           fi
 
@@ -74,6 +76,6 @@ jobs:
           echo "Successfully updated scheduler \`$SCHEDULER_NAME\` to \`$DESIRED_STATE\`." >> $GITHUB_STEP_SUMMARY
 
       - name: Handle unexpected error
-        if: failure()
+        if: failure() && steps.update_schedule_state.outputs.not_found != 'true'
         run: |
           echo "An unexpected error occurred during the workflow execution." >> $GITHUB_STEP_SUMMARY
