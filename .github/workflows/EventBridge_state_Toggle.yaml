@@ -15,8 +15,8 @@ on:
         required: true
         type: choice
         options:
-          - ENABLED
-          - DISABLED
+          - enable-disable-test
+          - enable-disable
       state:
         description: "Desired state (ENABLED or DISABLED)"
         required: true
