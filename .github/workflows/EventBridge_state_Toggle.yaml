@@ -57,7 +57,7 @@ jobs:
           fi
 
           SCHEDULER_JSON=$(echo "$RAW_JSON" | jq '.')
-          echo \`$SCHEDULER_JSON\` >> $GITHUB_STEP_SUMMARY
+
           CURRENT_STATE=$(echo "$SCHEDULER_JSON" | jq -r '.State')
           # Check current state
           if [ "$CURRENT_STATE" = "$DESIRED_STATE" ]; then
