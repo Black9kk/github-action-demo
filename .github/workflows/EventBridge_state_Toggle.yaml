@@ -51,11 +51,11 @@ jobs:
           # Check exist
           if echo "$RAW_JSON" | grep -q "ResourceNotFoundException"; then
             echo "Scheduler \`$SCHEDULER_NAME\` does not exist." >> $GITHUB_STEP_SUMMARY
-            exit 0
+            exit 1
           fi
 
           SCHEDULER_JSON=$(echo "$RAW_JSON" | jq '.')
-
+          echo \`$SCHEDULER_JSON\` >> $GITHUB_STEP_SUMMARY
           CURRENT_STATE=$(echo "$SCHEDULER_JSON" | jq -r '.State')
           # Check current state
           if [ "$CURRENT_STATE" = "$DESIRED_STATE" ]; then
