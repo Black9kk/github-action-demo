@@ -51,8 +51,6 @@ jobs:
           SCHEDULER_JSON=$(echo "$RAW_JSON" | jq '.')
 
           CURRENT_STATE=$(echo "$SCHEDULER_JSON" | jq -r '.State')
-          echo "✅ Scheduler \`$SCHEDULER_NAME\` exists." >> $GITHUB_STEP_SUMMARY
-          echo "Current state: $CURRENT_STATE" >> $GITHUB_STEP_SUMMARY
 
           if [ "$CURRENT_STATE" = "$DESIRED_STATE" ]; then
             echo "⚠️ Scheduler is already in desired state: $CURRENT_STATE." >> $GITHUB_STEP_SUMMARY
@@ -62,7 +60,6 @@ jobs:
           # Prepare new JSON for update
           JSON_INPUT=$(echo "$SCHEDULER_JSON" | jq --arg state "$DESIRED_STATE" '
             .State = $state
-            | del(.Arn, .CreationDate, .LastModificationDate)
           ')
 
           aws scheduler update-schedule --cli-input-json "$JSON_INPUT"
