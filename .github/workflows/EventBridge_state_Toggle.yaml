@@ -60,6 +60,7 @@ jobs:
           # Prepare new JSON for update
           JSON_INPUT=$(echo "$SCHEDULER_JSON" | jq --arg state "$DESIRED_STATE" '
             .State = $state
+            | del(.Arn, .CreationDate, .LastModificationDate)
           ')
 
           aws scheduler update-schedule --cli-input-json "$JSON_INPUT"
