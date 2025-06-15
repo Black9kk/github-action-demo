@@ -50,8 +50,8 @@ jobs:
           RAW_JSON=$(aws scheduler get-schedule --name "$SCHEDULER_NAME" 2>&1 || true)
           # Check exist
           if echo "$RAW_JSON" | grep -q "ResourceNotFoundException"; then
-            echo "❌ Scheduler \`$SCHEDULER_NAME\` does not exist." >> $GITHUB_STEP_SUMMARY
-            exit 1
+            echo "Scheduler \`$SCHEDULER_NAME\` does not exist." >> $GITHUB_STEP_SUMMARY
+            exit 0
           fi
 
           SCHEDULER_JSON=$(echo "$RAW_JSON" | jq '.')
@@ -59,7 +59,7 @@ jobs:
           CURRENT_STATE=$(echo "$SCHEDULER_JSON" | jq -r '.State')
           # Check current state
           if [ "$CURRENT_STATE" = "$DESIRED_STATE" ]; then
-            echo "⚠️ Scheduler \`$SCHEDULER_NAME\` is already in desired state: $CURRENT_STATE." >> $GITHUB_STEP_SUMMARY
+            echo "Scheduler \`$SCHEDULER_NAME\` is already in desired state: $CURRENT_STATE." >> $GITHUB_STEP_SUMMARY
             exit 0
           fi
 
@@ -71,9 +71,9 @@ jobs:
 
           aws scheduler update-schedule --cli-input-json "$JSON_INPUT"
 
-          echo "✅ Successfully updated scheduler \`$SCHEDULER_NAME\` to \`$DESIRED_STATE\`." >> $GITHUB_STEP_SUMMARY
+          echo "Successfully updated scheduler \`$SCHEDULER_NAME\` to \`$DESIRED_STATE\`." >> $GITHUB_STEP_SUMMARY
 
       - name: Handle unexpected error
         if: failure()
         run: |
-          echo "❌ An unexpected error occurred during the workflow execution." >> $GITHUB_STEP_SUMMARY
+          echo "An unexpected error occurred during the workflow execution." >> $GITHUB_STEP_SUMMARY
