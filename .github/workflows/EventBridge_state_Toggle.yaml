@@ -70,8 +70,7 @@ jobs:
           # Prepare new JSON for update
           result=$(echo "$result" | jq '.')
           echo "result: '$result'" >> $GITHUB_STEP_SUMMARY
-          json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate, .StartDate)')
-          
+          json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
 
           # Update state
           output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$DESIRED_STATE" 2>&1)
