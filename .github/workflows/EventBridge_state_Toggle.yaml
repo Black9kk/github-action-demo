@@ -59,10 +59,9 @@ jobs:
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          echo "Update starting..."
-          CURRENT_STATE=$(echo "$result" | jq -r '.State')
 
           # Check current state
+          CURRENT_STATE=$(echo "$result" | jq -r '.State')
           if [ "$CURRENT_STATE" = "$DESIRED_STATE" ]; then
             echo "Scheduler \`$SCHEDULER_NAME\` is already in desired state: $CURRENT_STATE." >> $GITHUB_STEP_SUMMARY
             exit 0
@@ -71,6 +70,9 @@ jobs:
           # Prepare new JSON for update
           result=$(echo "$result" | jq '.')
           json_input=$(echo "$result" | jq -c 'del(.Arn, .LastModificationDate)')
+          echo "json_input: '$json_input'"
+
+          # Update state
           output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$DESIRED_STATE" 2>&1)
           status=$?
           if [ "$status" -ne 0 ]; then
