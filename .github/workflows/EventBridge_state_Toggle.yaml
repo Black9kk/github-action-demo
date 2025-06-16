@@ -50,6 +50,7 @@ jobs:
         run: |
           result=$(aws scheduler get-schedule --name "$SCHEDULER_NAME" 2>&1)
           status=$?
+          echo "status: '$status=$'" >> $GITHUB_STEP_SUMMARY
           # Check exist
           if [ "$status" -ne 0 ]; then
             echo "Error: Lỗi khi lấy thông tin schedule từ AWS" >> $GITHUB_STEP_SUMMARY
@@ -68,13 +69,10 @@ jobs:
 
           # Prepare new JSON for update
           result=$(echo "$result" | jq '.')
-          json_input=$(echo "$result" | jq --arg state "$DESIRED_STATE" '
-            .State = $state
-            | del(.Arn, .CreationDate, .LastModificationDate)
-          ')
-
+          json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
           output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$DESIRED_STATE" 2>&1)
           status=$?
+          echo "status: '$status=$'" >> $GITHUB_STEP_SUMMARY
           if [ "$status" -ne 0 ]; then
             echo "Error: Lỗi khi cập nhật thông tin schedule trên AWS" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
