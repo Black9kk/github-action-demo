@@ -48,7 +48,7 @@ jobs:
       - name: Fetch scheduler info and handle logic
         id: update_schedule_state
         run: |
-          RAW_JSON=$(aws scheduler get-schedule --name "$SCHEDULER_NAME" 2>&1 || true)
+          RAW_JSON=$(aws scheduler get-schedule --name "$SCHEDULER_NAME")
           # Check exist
           if echo "$RAW_JSON" | grep -q "ResourceNotFoundException"; then
             echo "Scheduler \`$SCHEDULER_NAME\` does not exist." >> $GITHUB_STEP_SUMMARY
