@@ -69,7 +69,7 @@ jobs:
 
           # Prepare new JSON for update
           result=$(echo "$result" | jq '.')
-          json_input=$(echo "$result" | jq -c 'del(.Arn, .LastModificationDate)')
+          json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
           echo "json_input: '$json_input'"
 
           # Update state
