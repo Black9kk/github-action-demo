@@ -48,6 +48,7 @@ jobs:
       - name: Fetch scheduler info and handle logic
         id: update_schedule_state
         run: |
+          set +e
           result=$(aws scheduler get-schedule --name "$SCHEDULER_NAME" 2>&1)
           status=$?
           echo "status: '$status'" >> $GITHUB_STEP_SUMMARY
