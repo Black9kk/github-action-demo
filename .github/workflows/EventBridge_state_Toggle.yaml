@@ -51,8 +51,6 @@ jobs:
           set +e
           result=$(aws scheduler get-schedule --name "$SCHEDULER_NAME" 2>&1)
           status=$?
-          echo "status: '$status'" >> $GITHUB_STEP_SUMMARY
-          echo "result: '$result'" >> $GITHUB_STEP_SUMMARY
           # Check exist
           if [ "$status" -ne "0" ]; then
             echo "Error: Lỗi khi lấy thông tin schedule từ AWS" >> $GITHUB_STEP_SUMMARY
@@ -61,7 +59,7 @@ jobs:
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-
+          echo "Update starting..."
           CURRENT_STATE=$(echo "$result" | jq -r '.State')
           # Check current state
           if [ "$CURRENT_STATE" = "$DESIRED_STATE" ]; then
