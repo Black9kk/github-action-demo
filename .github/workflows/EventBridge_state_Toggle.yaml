@@ -51,6 +51,7 @@ jobs:
           set +e
           result=$(aws scheduler get-schedule --name "$SCHEDULER_NAME" 2>&1)
           status=$?
+          echo "$result"
           # Check exist
           if [ "$status" -ne "0" ]; then
             echo "Error: Lỗi khi lấy thông tin schedule từ AWS" >> $GITHUB_STEP_SUMMARY
