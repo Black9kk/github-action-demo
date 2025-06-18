@@ -79,11 +79,13 @@ jobs:
       - name: Update schedule state
         run: |
           # Prepare new JSON for update
-          json_input=$(echo '${{ steps.validate_schedule.outputs.result }}' | jq -c 'del(.Arn, .CreationDate, .LastModificationDate, .State)')
-
+          result='${{ steps.validate_schedule.outputs.result }}'
+          json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
+          echo "$input" >> $GITHUB_STEP_SUMMARY
           # Update state
           output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$desired_state" 2>&1)
           status=$?
+          echo "status: $status" >> $GITHUB_STEP_SUMMARY
           if [ "$status" -ne 0 ]; then
             echo "Error: Failed to update the scheduler \`$schedule_name\`!" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
