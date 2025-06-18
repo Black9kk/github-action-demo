@@ -82,7 +82,7 @@ jobs:
           output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$desired_state" 2>&1)
           status=$?
           if [ "$status" -ne 0 ]; then
-            echo "Error: Failed to update the scheduler \`$schedule_name`\!" >> $GITHUB_STEP_SUMMARY
+            echo "Error: Failed to update the scheduler \`$schedule_name\`!" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$output" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
