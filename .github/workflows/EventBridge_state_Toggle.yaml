@@ -49,7 +49,7 @@ jobs:
       - name: Validate and Update Scheduler State
         run: |
           set +e
-          result=$(aws scheduler get-schedule 2>&1)  || {
+          result=$(aws scheduler get-schedule --name "$schedule_name" 2>&1)  || {
             if echo "$result" | grep -q "ResourceNotFoundException"; then
             echo " Scheduler '$schedule_name' does not exist." >> $GITHUB_STEP_SUMMARY
             exit 1
