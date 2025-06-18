@@ -79,8 +79,7 @@ jobs:
       - name: Update schedule state
         run: |
           # Prepare new JSON for update
-          result='${{ steps.validate_schedule.outputs.result }}'
-          json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
+          json_input=$(echo '${{ steps.validate_schedule.outputs.result }}' | jq -c 'del(.Arn, .CreationDate, .LastModificationDate, .State)')
 
           # Update state
           output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$desired_state" 2>&1)
