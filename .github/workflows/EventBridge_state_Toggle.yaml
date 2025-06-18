@@ -45,7 +45,7 @@ jobs:
           echo "schedule_name=td-${{ inputs.env }}-${{ inputs.batch_name }}" >> $GITHUB_ENV
           echo "desired_state=${{ inputs.state }}" >> $GITHUB_ENV
 
-      - name: Validate the existence and current state of the schedule
+      - name: Validate and update Scheduler State
         id: validate_schedule
         run: |
           set +e
@@ -74,7 +74,7 @@ jobs:
             exit 0
           fi
 
-          # Prepare new JSON for update
+          # Removing read-only fields
           json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
 
           # Update state
