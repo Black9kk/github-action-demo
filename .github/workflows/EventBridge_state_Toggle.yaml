@@ -1,4 +1,4 @@
-name: Toggle EventBridge Scheduler State
+name: Toggle EventBridge
 
 on:
   workflow_dispatch:
@@ -79,6 +79,7 @@ jobs:
       - name: Update schedule state
         run: |
           # Prepare new JSON for update
+          echo "${{ steps.validate_schedule.outputs.result }}" >> $GITHUB_STEP_SUMMARY
           result="${{ steps.validate_schedule.outputs.result }}"
           json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
           echo "$input" >> $GITHUB_STEP_SUMMARY
