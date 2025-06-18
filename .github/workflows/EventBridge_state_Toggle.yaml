@@ -48,7 +48,6 @@ jobs:
 
       - name: Validate and Update Scheduler State
         run: |
-          set +e
           result=$(aws scheduler get-schedule --name "$schedule_name" 2>&1)  || {
             if echo "$result" | grep -q "ResourceNotFoundException"; then
             echo " Scheduler '$schedule_name' does not exist." >> $GITHUB_STEP_SUMMARY
@@ -69,7 +68,7 @@ jobs:
             exit 0
           fi
 
-          # Prepare new JSON for update
+          # Removing read-only fields
           json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
 
           # Update state
