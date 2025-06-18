@@ -42,18 +42,24 @@ jobs:
 
       - name: Set environment variables
         run: |
-          echo "SCHEDULER_NAME=td-${{ inputs.env }}-${{ inputs.batch_name }}" >> $GITHUB_ENV
-          echo "DESIRED_STATE=${{ inputs.state }}" >> $GITHUB_ENV
+          echo "schedule_name=td-${{ inputs.env }}-${{ inputs.batch_name }}" >> $GITHUB_ENV
+          echo "desired_state=${{ inputs.state }}" >> $GITHUB_ENV
 
-      - name: Fetch scheduler info and handle logic
-        id: update_schedule_state
+      - name: Validate the existence and current state of the schedule
+        id: validate_schedule
         run: |
           set +e
-          result=$(aws scheduler get-schedule --name "$SCHEDULER_NAME" 2>&1)
+          result=$(aws scheduler get-schedule --name "$schedule_name" 2>&1)
           status=$?
+
           # Check exist
+          if echo "$result" | grep -q "ResourceNotFoundException"; then
+            echo "Scheduler '$schedule_name' does not exist." >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # check error
           if [ "$status" -ne "0" ]; then
-            echo "Error: Lỗi khi lấy thông tin schedule từ AWS" >> $GITHUB_STEP_SUMMARY
+            echo "Error: Failed to retrieve the scheduler \`$schedule_name`\!" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$result" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
@@ -61,27 +67,26 @@ jobs:
           fi
 
           # Check current state
-          CURRENT_STATE=$(echo "$result" | jq -r '.State')
-          if [ "$CURRENT_STATE" = "$DESIRED_STATE" ]; then
-            echo "Scheduler \`$SCHEDULER_NAME\` is already in desired state: $CURRENT_STATE." >> $GITHUB_STEP_SUMMARY
+          current_state=$(echo "$result" | jq -r '.State')
+          if [ "$current_state" = "$desired_state" ]; then
+            echo "Scheduler \`$schedule_name\` is already in desired state:\`$current_state\`." >> $GITHUB_STEP_SUMMARY
             exit 0
           fi
-
+      - name: Update schedule state
+        run: |
           # Prepare new JSON for update
           result=$(echo "$result" | jq '.')
-          echo "result: '$result'" >> $GITHUB_STEP_SUMMARY
           json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
 
           # Update state
-          output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$DESIRED_STATE" 2>&1)
+          output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$desired_state" 2>&1)
           status=$?
-          echo "$output"
           if [ "$status" -ne 0 ]; then
-            echo "Error: Lỗi khi cập nhật thông tin schedule trên AWS" >> $GITHUB_STEP_SUMMARY
+            echo "Error: Failed to update the scheduler \`$schedule_name`\!" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$output" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          echo "Successfully updated scheduler \`$SCHEDULER_NAME\` to \`$DESIRED_STATE\`." >> $GITHUB_STEP_SUMMARY
+          echo "Successfully updated scheduler \`$schedule_name\` to \`$desired_state\`." >> $GITHUB_STEP_SUMMARY
 
