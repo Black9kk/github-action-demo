@@ -59,7 +59,7 @@ jobs:
 
           # check error
           if [ "$status" -ne "0" ]; then
-            echo "Error: Failed to retrieve the scheduler \`$schedule_name`\!" >> $GITHUB_STEP_SUMMARY
+            echo "Error: Failed to retrieve the scheduler \`$schedule_name\`!" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$result" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
