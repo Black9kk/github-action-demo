@@ -79,7 +79,7 @@ jobs:
       - name: Update schedule state
         run: |
           # Prepare new JSON for update
-          result='${{ steps.validate_schedule.outputs.result }}'
+          result="${{ steps.validate_schedule.outputs.result }}"
           json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
           echo "$input" >> $GITHUB_STEP_SUMMARY
           # Update state
