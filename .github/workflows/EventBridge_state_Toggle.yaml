@@ -28,6 +28,7 @@ on:
 jobs:
   toggle-scheduler:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     permissions:
       id-token: write
@@ -45,26 +46,21 @@ jobs:
           echo "schedule_name=td-${{ inputs.env }}-${{ inputs.batch_name }}" >> $GITHUB_ENV
           echo "desired_state=${{ inputs.state }}" >> $GITHUB_ENV
 
-      - name: Validate the existence and current state of the schedule
-        id: validate_schedule
+      - name: Validate and Update Scheduler State
         run: |
           set +e
-          result=$(aws scheduler get-schedule --name "$schedule_name" 2>&1)
-          status=$?
+          result=$(aws scheduler get-schedule --name "$schedule_name" 2>&1)  || {
+            if echo "$result" | grep -q "ResourceNotFoundException"; then
+            echo " Scheduler '$schedule_name' does not exist." >> $GITHUB_STEP_SUMMARY
+            exit 1
+            fi
 
-          # Check exist
-          if echo "$result" | grep -q "ResourceNotFoundException"; then
-            echo "Scheduler '$schedule_name' does not exist." >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # check error
-          if [ "$status" -ne "0" ]; then
             echo "Error: Failed to retrieve the scheduler \`$schedule_name\`!" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$result" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
-          fi
+          }
 
           # Check current state
           current_state=$(echo "$result" | jq -r '.State')
@@ -72,24 +68,18 @@ jobs:
             echo "Scheduler \`$schedule_name\` is already in desired state:\`$current_state\`." >> $GITHUB_STEP_SUMMARY
             exit 0
           fi
-          echo "result<<EOF" >> $GITHUB_OUTPUT
-          echo "$result" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-      - name: Update schedule state
-        run: |
+
           # Prepare new JSON for update
-          result='${{ steps.validate_schedule.outputs.result }}'
           json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
 
           # Update state
-          output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$desired_state" 2>&1)
-          status=$?
-          if [ "$status" -ne 0 ]; then
+          output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$desired_state" 2>&1) || {
             echo "Error: Failed to update the scheduler \`$schedule_name\`!" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$output" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
-          fi
+          }
+
           echo "Successfully updated scheduler \`$schedule_name\` to \`$desired_state\`." >> $GITHUB_STEP_SUMMARY
 
