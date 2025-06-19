@@ -74,7 +74,9 @@ jobs:
             echo "Scheduler \`$schedule_name\` is already in desired state:\`$current_state\`." >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
+          echo "result: $result" >> $GITHUB_STEP_SUMMARY
           encoded=$(echo "$result" | base64 -w 0)
+          echo "encoded: $encoded" >> $GITHUB_STEP_SUMMARY
           echo "result=$encoded" >> $GITHUB_OUTPUT
       - name: Validate and update Scheduler State
         run: |
