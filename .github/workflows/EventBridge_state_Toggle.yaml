@@ -61,7 +61,7 @@ jobs:
 
           # Check error
           if [ "$status" -ne "0" ]; then
-            echo "Error: Failed to retrieve the scheduler \`$schedule_name\`!" >> $GITHUB_STEP_SUMMARY
+            echo "Error: Failed to retrieve the scheduler '$schedule_name'!" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$result" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
@@ -71,7 +71,7 @@ jobs:
           # Check current state
           current_state=$(echo "$result" | jq -r '.State')
           if [ "$current_state" = "$desired_state" ]; then
-            echo "Scheduler \`$schedule_name\` is already in desired state:\`$current_state\`." >> $GITHUB_STEP_SUMMARY
+            echo "Scheduler '$schedule_name' is already in desired state:'$current_state'." >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
           encoded=$(echo "$result" | base64 -w 0)
@@ -87,10 +87,10 @@ jobs:
           output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$desired_state" 2>&1)
           status=$?
           if [ "$status" -ne 0 ]; then
-            echo "Error: Failed to update the scheduler \`$schedule_name\`!" >> $GITHUB_STEP_SUMMARY
+            echo "Error: Failed to update the scheduler '$schedule_name'!" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$output" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          echo "Successfully updated scheduler \`$schedule_name\` to \`$desired_state\`." >> $GITHUB_STEP_SUMMARY
+          echo "Successfully updated scheduler '$schedule_name' to '$desired_state'." >> $GITHUB_STEP_SUMMARY
