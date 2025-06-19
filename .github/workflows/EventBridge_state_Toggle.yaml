@@ -55,6 +55,7 @@ jobs:
           # Check existence
           if echo "$result" | grep -q "ResourceNotFoundException"; then
             echo "Scheduler '$schedule_name' does not exist." >> $GITHUB_STEP_SUMMARY
+            echo "$result"
             exit 1
           fi
 
