@@ -81,7 +81,7 @@ jobs:
       - name: Validate and update Scheduler State
         run: |
           # Removing read-only fields
-          raw_json=$(echo "${{ steps.validate_schedule.outputs.result }}" | base64 -d)
+          json_input=$(echo "${{ steps.validate_schedule.outputs.result }}" | base64 -d)
           json_input=$(echo "$raw_json" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
 
           # Update state
