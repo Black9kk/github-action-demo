@@ -72,11 +72,13 @@ jobs:
           current_state=$(echo "$result" | jq -r '.State')
           if [ "$current_state" = "$desired_state" ]; then
             echo "Scheduler \`$schedule_name\` is already in desired state:\`$current_state\`." >> $GITHUB_STEP_SUMMARY
-            exit 0
+            exit 1
           fi
-
+          echo "result=$result" >> $GITHUB_OUTPUT
+      - name: Validate and update Scheduler State
+        run: |
           # Removing read-only fields
-          json_input=$(echo "$result" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
+          json_input=$(echo "${{steps.validate_schedule.outputs.result}}" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
 
           # Update state
           output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$desired_state" 2>&1)
