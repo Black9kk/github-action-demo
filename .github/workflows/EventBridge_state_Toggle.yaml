@@ -74,14 +74,12 @@ jobs:
             echo "Scheduler \`$schedule_name\` is already in desired state:\`$current_state\`." >> $GITHUB_STEP_SUMMARY
             exit 1
           fi
-          encoded=$(echo "$result" | base64 -w 0)
-          echo "result=$encoded" >> $GITHUB_OUTPUT
+          echo "json_input=$(echo "$raw_json" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')" >> $GITHUB_OUTPUT
       - name: Validate and update Scheduler State
         run: |
           set +e
           # Removing read-only fields
-          json_input=$(echo "${{ steps.validate_schedule.outputs.result }}" | base64 -d)
-          json_input=$(echo "$raw_json" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
+          json_input="${{steps.validate_schedule.outputs.json_input}}"
 
           # Update state
           output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$desired_state" 2>&1)
