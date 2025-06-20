@@ -17,6 +17,9 @@ on:
       end_time:
         required: true
         type: string
+      huy:
+        type: string
+        required: true
 
 jobs:
   query_athena:
