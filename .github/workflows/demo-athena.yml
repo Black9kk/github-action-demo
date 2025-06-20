@@ -1,4 +1,4 @@
-name: Query Athena Logs
+name: Query Athena Logs 2
 
 on:
   workflow_dispatch:
