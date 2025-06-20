@@ -81,7 +81,7 @@ jobs:
           set +e
           # Removing read-only fields
           set -x
-          json_input="${{steps.validate_schedule.outputs.json_input}}"
+          json_input=${{steps.validate_schedule.outputs.json_input}}
 
           # Update state
           output=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "$desired_state" 2>&1)
