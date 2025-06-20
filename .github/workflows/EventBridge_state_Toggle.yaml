@@ -49,6 +49,7 @@ jobs:
         id: validate_schedule
         run: |
           set +e
+          set -x
           result=$(aws scheduler get-schedule --name "$schedule_name" 2>&1)
           status=$?
 
@@ -79,6 +80,7 @@ jobs:
         run: |
           set +e
           # Removing read-only fields
+          set -x
           json_input="${{steps.validate_schedule.outputs.json_input}}"
 
           # Update state
