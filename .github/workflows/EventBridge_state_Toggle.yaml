@@ -55,10 +55,7 @@ jobs:
           }
 
           # Check current state
-          current_state=$(echo "$response_get" | jq -r '.State') || {
-            echo "Error: Unable to parse state from response!" >> $GITHUB_STEP_SUMMARY
-            exit 1
-          }
+          current_state=$(echo "$response_get" | jq -r '.State')
           if [ "$current_state" = "${{ inputs.schedule_state }}" ]; then
             echo "Scheduler \`$schedule_full_name\` is already in desired state:\`$current_state\`." >> $GITHUB_STEP_SUMMARY
             echo "matched=true" >> $GITHUB_OUTPUT
@@ -84,4 +81,4 @@ jobs:
             exit 1
           }
 
-          echo "Successfully updated scheduler ${{ steps.validate_schedule.outputs.schedule_full_name }} to ${{ inputs.schedule_state }}." >> $GITHUB_STEP_SUMMARY
+          echo "Successfully updated scheduler ${{ steps.validate_schedule.outputs.schedule_full_name }} to ${{ inputs.schedule_state }}!" >> $GITHUB_STEP_SUMMARY
