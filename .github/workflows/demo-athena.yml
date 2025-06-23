@@ -2,22 +2,6 @@ name: Query Athena Logs
 
 on:
   workflow_dispatch:
-    inputs:
-      environment:
-        type: choice
-        description: "Select environment"
-        required: true
-        options:
-          - dev01
-          - dev02
-          - dev03
-      start_time:
-        required: true
-        type: string
-      end_time:
-        required: true
-        type: string
-
 jobs:
   query_athena:
     name: Athena Query Job
