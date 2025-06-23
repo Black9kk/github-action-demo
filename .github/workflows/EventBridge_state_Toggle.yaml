@@ -61,24 +61,26 @@ jobs:
             echo "matched=true" >> $GITHUB_OUTPUT
             exit 0
           else
+            # decode
+            echo "schedule_json=$(echo "$response_get" | base64 -w 0)" >> $GITHUB_OUTPUT
             echo "matched=false" >> $GITHUB_OUTPUT
           fi
 
-          echo "schedule_json=$(echo "$response_get" | base64 -w 0)" >> $GITHUB_OUTPUT
+         
       - name: Validate and update Scheduler State
         if: steps.validate_schedule.outputs.matched == 'false'
         run: |
-          # Removing read-only fields
+          # Removing read-only fields and state
           json_decode=$(echo "${{ steps.validate_schedule.outputs.schedule_json }}" | base64 -d)
-          json_input=$(echo "$json_decode" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
+          json_input=$(echo "$json_decode" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate, .State)')
 
           # Update state
           response_update=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "${{ inputs.schedule_state }}" 2>&1) || {
-            echo "Error: Failed to update the scheduler ${{ steps.validate_schedule.outputs.schedule_full_name }}" >> $GITHUB_STEP_SUMMARY
+            echo "Error: Failed to update the scheduler '${{ steps.validate_schedule.outputs.schedule_full_name }}'!" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             echo "$response_update" >> $GITHUB_STEP_SUMMARY
             echo '```' >> $GITHUB_STEP_SUMMARY
             exit 1
           }
 
-          echo "Successfully updated scheduler ${{ steps.validate_schedule.outputs.schedule_full_name }} to ${{ inputs.schedule_state }}!" >> $GITHUB_STEP_SUMMARY
+          echo "Successfully updated scheduler '${{ steps.validate_schedule.outputs.schedule_full_name }}' to ${{ inputs.schedule_state }}!" >> $GITHUB_STEP_SUMMARY
