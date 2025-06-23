@@ -72,7 +72,7 @@ jobs:
         run: |
           # Removing read-only fields and state
           json_decode=$(echo "${{ steps.validate_schedule.outputs.schedule_json }}" | base64 -d)
-          json_input=$(echo "$json_decode" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate, .State)')
+          json_input=$(echo "$json_decode" | jq -c 'del(.Arn, .CreationDate, .LastModificationDate)')
 
           # Update state
           response_update=$(aws scheduler update-schedule --cli-input-json "$json_input" --state "${{ inputs.schedule_state }}" 2>&1) || {
