@@ -26,6 +26,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - name: Sleep for 1 minute
+        run: sleep 60s
+        shell: bash
       - name: terraform plan
         id: terraform_plan
         run: |
