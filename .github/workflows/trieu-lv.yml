@@ -1,15 +1,35 @@
-name: WIP_Check active GHAction
+name: Check active GHAction
 on:
   workflow_dispatch:
-
+    inputs:
+      working_directory:
+        description: "Working directory"
+        required: true
+        default: 'awsenv/dev/env'
+        type: choice
+        options:
+          - awsenv/dev/env
+          - awsenv/dev/group
+      tf_workspace:
+        description: 'Terraform workspace'
+        required: true
+        default: 'stg01'
+        type: choice
+        options:
+          - stg01
+          - dev01
+      lock_id_input:
+        description: 'Lock ID for unlock'
+        required: true
 jobs:
   get-lock-id:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    outputs:
-      lock-id-plan: ${{ steps.terraform_plan.outputs.lock_id }}
     steps:
       - name: terraform plan
         id: terraform_plan
         run: |
-         echo "Successfully force-unlocked state with ID"
+          echo "${{ github.event.inputs.working_directory }}" >> $GITHUB_STEP_SUMMARY
+          echo "${{ github.event.inputs.tf_workspace }}" >> $GITHUB_STEP_SUMMARY
+
+          echo "${{ github.event.inputs.lock_id_input }}" >> $GITHUB_STEP_SUMMARY
