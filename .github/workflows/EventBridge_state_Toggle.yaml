@@ -45,7 +45,7 @@ jobs:
         run: |
           schedule_name=${{ inputs.schedule_name }}
           cleaned="${schedule_name#*)}"
-          echo"cleaned:$cleaned"
+          echo"cleaned ${cleaned}"
           schedule_full_name=td-${{ inputs.env }}-${ cleaned }
           echo "schedule_full_name=$schedule_full_name" >> $GITHUB_OUTPUT
 
