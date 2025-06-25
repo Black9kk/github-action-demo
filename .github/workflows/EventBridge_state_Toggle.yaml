@@ -15,7 +15,7 @@ on:
         required: true
         type: choice
         options:
-          - enable-disable-test
+          - (B104)enable-disable-test
           - enable-disable
       schedule_state:
         description: "Desired state (ENABLED or DISABLED)"
@@ -43,7 +43,9 @@ jobs:
       - name: Check current Scheduler State
         id: validate_schedule
         run: |
-          schedule_full_name=td-${{ inputs.env }}-${{ inputs.schedule_name }}
+          schedule_name=${{ inpus.schedule_name }}
+          cleaned="${schedule_name#*)}"
+          schedule_full_name=td-${{ inputs.env }}-${ cleaned }
           echo "schedule_full_name=$schedule_full_name" >> $GITHUB_OUTPUT
 
           response_get=$(aws scheduler get-schedule --name "$schedule_full_name" 2>&1) || {
