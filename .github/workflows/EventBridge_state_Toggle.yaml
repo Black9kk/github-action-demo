@@ -44,8 +44,7 @@ jobs:
         id: validate_schedule
         run: |
           schedule_name="${{ inputs.schedule_name }}"
-          cleaned="${schedule_name#*)}"
-          schedule_full_name="td-${{ inputs.env }}-${cleaned}"
+          schedule_full_name="td-${{ inputs.env }}-${schedule_name#*)}"
           echo "schedule_full_name=$schedule_full_name" >> $GITHUB_OUTPUT
 
           response_get=$(aws scheduler get-schedule --name "$schedule_full_name" 2>&1) || {
