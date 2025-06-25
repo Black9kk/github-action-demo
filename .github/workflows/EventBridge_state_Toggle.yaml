@@ -43,7 +43,7 @@ jobs:
       - name: Check current Scheduler State
         id: validate_schedule
         run: |
-          schedule_name=${{ inputs.schedule_name }}
+          schedule_name="${{ inputs.schedule_name }}"
           cleaned="${schedule_name#*)}"
           schedule_full_name=td-${{ inputs.env }}-${ cleaned }
           echo "schedule_full_name=$schedule_full_name" >> $GITHUB_OUTPUT
