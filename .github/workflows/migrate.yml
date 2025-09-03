@@ -39,6 +39,22 @@ jobs:
             -d "$DB_NAME" \
             -c "\conninfo"
 
+      - name: Init extensions
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: 5432
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+        run: |
+          echo "=== Initializing extensions (aws_commons, aws_s3) ==="
+          PGPASSWORD="$DB_PASS" psql \
+            -h "$DB_HOST" \
+            -p "$DB_PORT" \
+            -U "$DB_USER" \
+            -d "$DB_NAME" \
+            -c "CREATE EXTENSION IF NOT EXISTS aws_commons; CREATE EXTENSION IF NOT EXISTS aws_s3;"
+
       - name: Run migration
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
