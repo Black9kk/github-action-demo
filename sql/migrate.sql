@@ -5,7 +5,7 @@ BEGIN
   -- Load JSON file từ S3 vào biến json_data
   SELECT convert_from(
     aws_s3.object_get(
-      aws_commons.create_s3_uri('your-bucket', 'data.json', 'ap-southeast-1')
+      aws_commons.create_s3_uri('your-bucket', 'jsonfile.json', 'ap-southeast-1')
     ),
     'UTF8'
   )::jsonb INTO json_data;
